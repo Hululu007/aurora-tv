@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+src-tauri/target/
+src-tauri/gen/
+*.tsbuildinfo
+
+# local dev
+.tmp/
+install.log
+
+# editor / os
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# android signing (never commit)
+*.jks
+*.keystore
