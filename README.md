@@ -1,5 +1,7 @@
 # Aurora TV
 
+[![Build](https://github.com/othellllo/aurora-tv/actions/workflows/build.yml/badge.svg)](https://github.com/othellllo/aurora-tv/actions/workflows/build.yml)
+
 > 苹果 TV 风格的跨端 TVBox 客户端：**Android 手机 · Windows · Android TV**，一套 React 界面 + Tauri 2 原生壳。
 
 ![首页](docs/screenshots/home.png)
@@ -61,6 +63,10 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 - 浏览器预览：无需其他依赖
 - Windows 打包：Rust + Visual Studio Build Tools（C++ 桌面开发）
 - Android：Rust + Android Studio（SDK / NDK），详见 [docs/BUILD.md](docs/BUILD.md)
+
+> **不想在本机装工具链？** 仓库自带 GitHub Actions：推到 `main` 或手动触发
+> [Build workflow](https://github.com/othellllo/aurora-tv/actions/workflows/build.yml)，
+> 就能在 Artifacts 里直接下载 Windows 安装包和 Android APK。打 `v*` 标签还会自动创建 Release。
 
 ### 1. 浏览器里跑起来
 

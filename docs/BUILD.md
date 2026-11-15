@@ -7,6 +7,11 @@ npm install
 npm run build      # 产出 dist/
 ```
 
+> **最快的方式：让 GitHub 帮你编译。**
+> 仓库内的 `.github/workflows/build.yml` 会在 `windows-latest` 和 `ubuntu-latest` 上分别产出
+> Windows 安装包与 Android APK，无需本机安装 Rust / VS / Android SDK。
+> 打开 Actions → Build → 最近一次运行 → Artifacts 下载；推 `v*` 标签会自动发 Release。
+
 `npm run build` 会先跑 `tsc -b` 做类型检查，再用 Vite + terser 打包。
 Vite 配置用 `--configLoader runner` 加载，规避少数 Windows 安全软件锁 esbuild 临时文件的问题。
 
