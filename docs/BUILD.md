@@ -70,6 +70,23 @@ npx tauri android build --apk  # 生成 APK
 
 APK 位置：`src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk`
 
+### 发布签名
+
+仓库的 GitHub Actions 已通过 Secrets 配置了 release 签名：
+
+| Secret | 内容 |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | keystore 的 Base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore 密码 |
+| `ANDROID_KEY_ALIAS` | key 别名（aurora） |
+| `ANDROID_KEY_PASSWORD` | key 密码 |
+
+工作流里的 `scripts/patch-android-signing.mjs` 会在 `tauri android init` 之后写入
+`gen/android/keystore.properties` 并给 `build.gradle.kts` 注入 `signingConfigs`。
+
+本地打包需要把 keystore 放到 `.secrets/aurora-release.jks`（已在 `.gitignore` 中），
+并自行设置同名环境变量；**务必备份 keystore 与密码**，丢失后将无法覆盖安装新版本。
+
 签名：默认使用 debug 签名；发布前在 `src-tauri/gen/android/app/build.gradle.kts` 配置 `signingConfigs`，并保管好 keystore。
 
 ## 4. Android TV 适配

@@ -94,15 +94,23 @@ jobs:
       - name: Patch Android manifest for Android TV
         run: node scripts/patch-android-tv.mjs
 
-      - name: Build debug APK
-        run: npx tauri android build --apk --debug
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: node scripts/patch-android-signing.mjs
+
+      - name: Build signed release APKs
+        run: npx tauri android build --apk --split-per-abi --target aarch64 armv7
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: aurora-tv-android
           if-no-files-found: error
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
 
   release:
     name: Attach artifacts to release

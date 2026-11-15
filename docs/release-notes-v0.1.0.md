@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | Windows | `AuroraTV_0.1.0_x64-setup.exe` | NSIS 安装包，双击安装 |
 | Windows | `AuroraTV_0.1.0_x64_en-US.msi` | MSI 安装包，适合批量部署 |
-| Android / Android TV | `AuroraTV_0.1.0_android-universal-debug.apk` | 通用 debug APK，可直接安装 |
+| Android / TV 64 位 | `AuroraTV_0.1.0_arm64-v8a.apk` | 绝大多数手机与现代电视盒子 |
+| Android / TV 32 位 | `AuroraTV_0.1.0_armeabi-v7a.apk` | 老款电视盒子 / 32 位设备 |
 
 ## 功能
 
@@ -28,16 +29,16 @@
 **Android 手机 / 电视**：
 
 ```bash
-adb install -r AuroraTV_0.1.0_android-universal-debug.apk
+adb install -r AuroraTV_0.1.0_arm64-v8a.apk
 ```
 
+32 位设备改用 `AuroraTV_0.1.0_armeabi-v7a.apk`。
 或把 APK 拷到 U 盘，用电视文件管理器安装（需允许未知来源）。
 电视端已声明 Leanback 入口与横屏，会出现在电视的「应用」行。
 
 ## 已知限制
 
 - **type 3 spider 站点（jar / drpy）暂不支持**，需要独立内核；当前自动使用 type 1 CMS 站点。
-- APK 为 debug 签名，适合自用与测试；正式分发请配置自己的 keystore。
 - 播放器暂不支持直播（`lives`）与弹幕。
 
 完整说明见 [README](https://github.com/othellllo/aurora-tv/blob/main/README.md)。
