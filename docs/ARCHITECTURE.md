@@ -86,6 +86,18 @@ Rust 内嵌 QuickJS（`rquickjs`）加载 `drpy2.min.js` 或 jar 对应的 JS �
 `homeContent / categoryContent / detailContent / searchContent / playerContent` 五个方法，返回同样的
 `Vod` JSON。前端只需把 `loadGroups()`/`buildRows()` 的分支从「HTTP CMS」切到「spider 调用」，UI 与数据模型不变。
 
+## 解析线路（parses）
+
+CMS 站点经常返回「网页播放地址」而不是直链。`resolveParseUrl()`（`src/core/tvbox.ts`）会：
+
+1. 判断是否已是 `.m3u8` / `.mp4`，是则直接播放；
+2. 否则按 `type === 1`（JSON 解析）优先、`type === 0`（网页解析）其次，最多尝试 5 条；
+3. 请求 `parse.url + encodeURIComponent(播放地址)`，从返回的 JSON/HTML 里提取第一个 `m3u8` / `mp4` 直链；
+4. 全部失败则原样返回，由播放器展示可重试的错误。
+
+解析在播放器里**按集懒加载**，不会因为一季几十集而一次性发几十个请求；解析期间显示「正在解析播放地址」。
+它解决的是「CMS 站点 + 网页播放页」，**不能**替代 spider：spider 站点连列表与详情都来自 class/js 逻辑，必须要有内核。
+
 ## 焦点导航
 
 `src/core/nav.ts` 是一个不依赖框架的空间导航实现：

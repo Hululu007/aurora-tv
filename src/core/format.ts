@@ -69,3 +69,8 @@ export function clamp(value: number, min: number, max: number): number {
 export function isPlayableUrl(url: string): boolean {
   return /^https?:\/\//i.test(url) && /\.(m3u8|mp4|flv|mkv|ts)(\?|#|$)/i.test(url)
 }
+
+/** 是否已经是可直接播放的媒体地址（m3u8 / mp4 等） */
+export function isMediaUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url) && /\.(m3u8|mp4|flv|mkv|ts)(\?|#|$)/i.test(url)
+}

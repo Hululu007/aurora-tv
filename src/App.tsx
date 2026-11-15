@@ -449,6 +449,7 @@ export default function App() {
           sourceIndex={catalog.sourceIndex}
           sites={catalog.sites}
           activeSite={catalog.site}
+          parseCount={catalog.parses.length}
           demo={catalog.demo}
           loading={catalog.phase === 'loading'}
           error={catalog.error}
@@ -483,6 +484,7 @@ export default function App() {
             setNavLock(false)
             setPlayback(null)
           }}
+          resolveUrl={catalog.resolvePlay}
           onProgress={handleProgress}
         />
       ) : null}

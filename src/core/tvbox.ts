@@ -3,6 +3,7 @@ import type {
   CatalogItem,
   MultiConfig,
   MultiUrl,
+  ParseEndpoint,
   PlayGroup,
   RawConfig,
   RawSite,
@@ -10,7 +11,7 @@ import type {
   Vod,
   VodClass,
 } from './types'
-import { cleanSiteName, stripHtml } from './format'
+import { cleanSiteName, isMediaUrl, stripHtml } from './format'
 
 const CACHE_PREFIX = 'aurora.cache.'
 const CACHE_TTL = 1000 * 60 * 60 * 3
@@ -240,8 +241,7 @@ export function pickRowClasses(classes: VodClass[], limit = 6): VodClass[] {
   return picked
 }
 
-export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Array<{ key: string; title: string; items: CatalogItem[] }>; classes: VodClass[] }> {
-  const classes = await fetchClasses(site.api, proxy)
+export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Array<{ key: string; title: string; items: CatalogItem[] }>; classes: VodClass[] }> {  const classes = await fetchClasses(site.api, proxy)
   const picks = pickRowClasses(classes, 5)
   const results = await Promise.all(
     picks.map(async (cls) => {
@@ -278,4 +278,80 @@ export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Arr
   }
 
   return { rows, classes }
+}
+
+/* ------------------------------------------------------------------ *
+ * 解析线路（TVBox parses）：把网页播放地址解析成 m3u8 / mp4 直链
+ * ------------------------------------------------------------------ */
+
+export function normalizeParses(config: RawConfig): ParseEndpoint[] {
+  const parses = Array.isArray(config.parses) ? config.parses : []
+  return parses
+    .filter((item) => item && typeof item === 'object' && /^https?:\/\//i.test(String(item.url ?? '')))
+    .map((item) => ({
+      name: item.name || '解析线路',
+      type: Number(item.type ?? 0),
+      url: String(item.url),
+      flags: Array.isArray(item.ext?.flag) ? item.ext!.flag!.map(String) : [],
+    }))
+}
+
+/** 从解析接口的返回里提取第一个可播放直链 */
+function extractMediaUrl(text: string): string | null {
+  const decoded = text.replace(/\\\//g, '/').replace(/\\u002F/g, '/')
+
+  const direct = decoded.match(
+    /https?:\/\/[^\s"'<>\\]+?\.(?:m3u8|mp4)(?:\?[^\s"'<>\\]*)?/i,
+  )
+  if (direct) return direct[0]
+
+  try {
+    const json = JSON.parse(decoded) as Record<string, unknown>
+    const candidates = [
+      json.url,
+      json.playurl,
+      json.playUrl,
+      (json.data as Record<string, unknown>)?.url,
+      (json.data as Record<string, unknown>)?.playurl,
+      json.data,
+    ]
+    for (const value of candidates) {
+      if (typeof value === 'string' && /^https?:\/\//i.test(value)) return value
+    }
+  } catch {
+    /* 不是 JSON，忽略 */
+  }
+  return null
+}
+
+/**
+ * 依次尝试配置里的解析接口，把非直链地址解析成可播放地址。
+ * 全部失败时原样返回，由播放器给出错误提示。
+ */
+export async function resolveParseUrl(
+  rawUrl: string,
+  parses: ParseEndpoint[],
+  proxy?: string,
+): Promise<string> {
+  if (isMediaUrl(rawUrl)) return rawUrl
+  if (!/^https?:\/\//i.test(rawUrl)) return rawUrl
+  if (!parses.length) return rawUrl
+
+  const ordered = [...parses].sort((a, b) => {
+    const score = (item: ParseEndpoint) => (item.type === 1 ? 2 : item.type === 0 ? 1 : 0)
+    return score(b) - score(a)
+  })
+
+  for (const parse of ordered.slice(0, 5)) {
+    try {
+      const target = parse.url + encodeURIComponent(rawUrl)
+      const text = await getText(target, { proxy, timeout: 9000 })
+      const found = extractMediaUrl(text)
+      if (found) return found
+    } catch {
+      /* 换下一条解析线路 */
+    }
+  }
+
+  return rawUrl
 }

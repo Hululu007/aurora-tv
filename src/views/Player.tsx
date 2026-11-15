@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import type { PlaybackState } from '../core/types'
 import { focusFirst, setNavLock } from '../core/nav'
-import { formatTime } from '../core/format'
+import { formatTime, isMediaUrl } from '../core/format'
 import {
   ChevronLeft,
   CloseIcon,
@@ -18,6 +18,7 @@ interface PlayerProps {
   autoNext: boolean
   seekStep: number
   onClose: () => void
+  resolveUrl?: (url: string) => Promise<string>
   onProgress: (payload: {
     groupIndex: number
     episodeIndex: number
@@ -26,7 +27,14 @@ interface PlayerProps {
   }) => void
 }
 
-export function Player({ state, autoNext, seekStep, onClose, onProgress }: PlayerProps) {
+export function Player({
+  state,
+  autoNext,
+  seekStep,
+  onClose,
+  resolveUrl,
+  onProgress,
+}: PlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const hideTimer = useRef<number | null>(null)
@@ -42,10 +50,12 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
   const [error, setError] = useState<string | null>(null)
   const [focusIndex, setFocusIndex] = useState(-1)
   const [reloadKey, setReloadKey] = useState(0)
+  const [resolvedUrl, setResolvedUrl] = useState('')
+  const [resolving, setResolving] = useState(false)
 
   const group = state.groups[groupIndex]
   const episode = group?.episodes[episodeIndex]
-  const url = episode?.url ?? ''
+  const rawUrl = episode?.url ?? ''
 
   const reveal = useCallback(() => {
     setShowUi(true)
@@ -70,10 +80,49 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
     }
   }, [reveal])
 
+  // 解析非直链地址（TVBox parses）
+  useEffect(() => {
+    let alive = true
+    setError(null)
+    if (!rawUrl) {
+      setResolvedUrl('')
+      return
+    }
+    if (isMediaUrl(rawUrl) || !resolveUrl) {
+      setResolvedUrl(rawUrl)
+      setResolving(false)
+      return
+    }
+
+    setResolving(true)
+    setResolvedUrl('')
+    const video = videoRef.current
+    if (video) {
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+    resolveUrl(rawUrl)
+      .then((next) => {
+        if (!alive) return
+        setResolvedUrl(next || rawUrl)
+        setResolving(false)
+      })
+      .catch(() => {
+        if (!alive) return
+        setResolvedUrl(rawUrl)
+        setResolving(false)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [rawUrl, resolveUrl])
+
   // 加载视频
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !url) return
+    if (!video || !resolvedUrl) return
     setError(null)
     setPlaying(true)
 
@@ -82,8 +131,8 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
       hlsRef.current = null
     }
 
-    if (/\.mp4(\?|#|$)/i.test(url) || video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url
+    if (/\.mp4(\?|#|$)/i.test(resolvedUrl) || video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = resolvedUrl
     } else if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
@@ -92,7 +141,7 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
         backBufferLength: 30,
       })
       hlsRef.current = hls
-      hls.loadSource(url)
+      hls.loadSource(resolvedUrl)
       hls.attachMedia(video)
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (!data.fatal) return
@@ -105,7 +154,7 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
         setError(message)
       })
     } else {
-      video.src = url
+      video.src = resolvedUrl
     }
 
     const start = state.startTime ?? 0
@@ -123,7 +172,7 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
       hlsRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, reloadKey])
+  }, [resolvedUrl, reloadKey])
 
   const saveProgress = useCallback(
     (force = false) => {
@@ -290,6 +339,16 @@ export function Player({ state, autoNext, seekStep, onClose, onProgress }: Playe
         onError={() => setError('视频加载失败，请换一条线路或稍后再试。')}
         onClick={togglePlay}
       />
+
+      {resolving ? (
+        <div className="player-error">
+          <div className="box">
+            <span className="spinner" />
+            <h3 style={{ color: '#fff', fontSize: 18, marginBottom: 10 }}>正在解析播放地址</h3>
+            <p>尝试配置里的解析线路，可能需要几秒…</p>
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="player-error">

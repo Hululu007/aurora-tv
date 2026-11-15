@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   CatalogItem,
   MultiUrl,
+  ParseEndpoint,
   PlayGroup,
   Row,
   SearchHit,
@@ -14,7 +15,9 @@ import {
   fetchDetail,
   loadMulti,
   loadSourceConfig,
+  normalizeParses,
   parsePlayGroups,
+  resolveParseUrl,
   searchSite,
   toItem,
   toSites,
@@ -31,6 +34,7 @@ export interface Catalog {
   site: Site | null
   rows: Row[]
   hero: CatalogItem[]
+  parses: ParseEndpoint[]
   booting: boolean
   boot: () => void
   selectSource: (index: number) => Promise<void>
@@ -40,6 +44,7 @@ export interface Catalog {
   addSite: (name: string, api: string) => Promise<void>
   search: (keyword: string) => Promise<SearchHit[]>
   loadGroups: (item: CatalogItem) => Promise<PlayGroup[]>
+  resolvePlay: (url: string) => Promise<string>
 }
 
 const LAST_SITE_KEY = 'aurora.lastSite'
@@ -104,6 +109,7 @@ export function useCatalog(settings: Settings): Catalog {
   const [site, setSite] = useState<Site | null>(null)
   const [rows, setRows] = useState<Row[]>([])
   const [hero, setHero] = useState<CatalogItem[]>([])
+  const [parses, setParses] = useState<ParseEndpoint[]>([])
   const [booting, setBooting] = useState(true)
   const runId = useRef(0)
 
@@ -219,11 +225,14 @@ export function useCatalog(settings: Settings): Catalog {
         const chosen = await activateFirstWorking(combined, proxy)
         setSources(list)
         setSourceIndex(chosen.sourceIndex)
-        const config = await withTimeout(
+        const chosenConfig = await withTimeout(
           loadSourceConfig(list[chosen.sourceIndex].url, proxy),
           14000,
         ).catch(() => null)
-        if (config) setSites(toSites(config, chosen.sourceIndex))
+        if (chosenConfig) {
+          setSites(toSites(chosenConfig, chosen.sourceIndex))
+          setParses(normalizeParses(chosenConfig))
+        }
         localStorage.setItem('aurora.lastSource', String(chosen.sourceIndex))
       } catch (err) {
         if (ticket !== runId.current) return
@@ -267,6 +276,7 @@ export function useCatalog(settings: Settings): Catalog {
         const supported = toSites(config, index)
         setSites(supported)
         if (!supported.length) throw new Error('这个源没有可直接播放的 CMS 站点')
+        setParses(normalizeParses(config))
         await activateFirstWorking(supported, proxy)
       } catch (err) {
         if (ticket !== runId.current) return
@@ -354,6 +364,11 @@ export function useCatalog(settings: Settings): Catalog {
 
   const reload = useCallback(() => boot(), [boot])
 
+  const resolvePlay = useCallback(
+    (url: string) => resolveParseUrl(url, parses, settings.data.proxy),
+    [parses, settings.data.proxy],
+  )
+
   return {
     phase,
     demo,
@@ -364,6 +379,7 @@ export function useCatalog(settings: Settings): Catalog {
     site,
     rows,
     hero,
+    parses,
     booting,
     boot,
     selectSource,
@@ -373,6 +389,7 @@ export function useCatalog(settings: Settings): Catalog {
     addSite,
     search,
     loadGroups,
+    resolvePlay,
   }
 }
 

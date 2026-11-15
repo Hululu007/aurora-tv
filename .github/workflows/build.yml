@@ -54,7 +54,9 @@ jobs:
     env:
       NDK_VERSION: 27.2.12479018
       ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       NDK_HOME: /usr/local/lib/android/sdk/ndk/27.2.12479018
+      ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/27.2.12479018
     steps:
       - uses: actions/checkout@v4
 
@@ -68,11 +70,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install Android SDK / NDK
         run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${NDK_VERSION}"
+          SDKMANAGER=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | head -n 1)
+          echo "using $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${NDK_VERSION}"
 
       - uses: dtolnay/rust-toolchain@stable
         with:

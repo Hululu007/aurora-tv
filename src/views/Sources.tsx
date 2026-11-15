@@ -8,6 +8,7 @@ interface SourcesProps {
   sourceIndex: number
   sites: Site[]
   activeSite: Site | null
+  parseCount: number
   demo: boolean
   loading: boolean
   error: string | null
@@ -32,6 +33,7 @@ export function Sources({
   sourceIndex,
   sites,
   activeSite,
+  parseCount,
   demo,
   loading,
   error,
@@ -65,7 +67,7 @@ export function Sources({
               <p>
                 {demo
                   ? '当前是演示模式。选择下方任一站点即可切换到真实片源。'
-                  : `正在使用 ${activeSite?.name ?? '本地站点'} · 共 ${sites.length} 个可直接播放的站点`}
+                  : `正在使用 ${activeSite?.name ?? '本地站点'} · ${sites.length} 个站点 · ${parseCount} 条解析线路`}
               </p>
             </div>
             <div className="actions">

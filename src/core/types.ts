@@ -21,11 +21,26 @@ export interface RawConfig {
   wallpaper?: string
   warningText?: string
   sites?: RawSite[]
+  parses?: RawParse[]
   lives?: unknown[]
-  parses?: unknown[]
   doh?: unknown[]
   rules?: unknown[]
   url?: string
+}
+
+export interface RawParse {
+  name: string
+  type: number
+  url: string
+  ext?: { flag?: string[]; header?: Record<string, string> }
+}
+
+/** 归一化后的解析线路（TVBox parses） */
+export interface ParseEndpoint {
+  name: string
+  type: number
+  url: string
+  flags: string[]
 }
 
 export interface MultiUrl {
