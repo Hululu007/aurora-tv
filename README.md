@@ -58,6 +58,18 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 ## 快速开始
 
+### 下载现成安装包
+
+- **Releases**：<https://github.com/othellllo/aurora-tv/releases>
+- 或 Actions → [Build](https://github.com/othellllo/aurora-tv/actions/workflows/build.yml) → 最新运行 → Artifacts
+
+| 平台 | 文件 |
+| --- | --- |
+| Windows | `AuroraTV_0.1.0_x64-setup.exe` / `.msi` |
+| Android / TV | `AuroraTV_0.1.0_android-universal-debug.apk` |
+
+APK 为 debug 签名，可直接安装；电视端已带 Leanback 入口与横屏。
+
 ### 0. 环境
 
 - Node.js ≥ 20（本项目用 24 验证）
