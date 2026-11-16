@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { TouchEvent as ReactTouchEvent } from 'react'
 import Hls from 'hls.js'
 import type { PlaybackState } from '../core/types'
 import { isPhoneUi, setNavLock } from '../core/nav'
@@ -74,6 +75,18 @@ export function Player({
   const [forceRotate, setForceRotate] = useState(false)
   const [fit, setFit] = useState<'contain' | 'cover'>('contain')
   const [fullscreen, setFullscreen] = useState(false)
+  const [brightness, setBrightness] = useState(1)
+  const [gesture, setGesture] = useState<{ kind: 'seek' | 'volume' | 'brightness'; text: string } | null>(
+    null,
+  )
+  const gestureRef = useRef<{
+    x: number
+    y: number
+    mode: 'seek' | 'volume' | 'brightness' | null
+    startTime: number
+    startVolume: number
+    startBrightness: number
+  } | null>(null)
   const [notice, setNotice] = useState('')
   const phoneLayout = isPhoneUi()
   const handheld = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)
@@ -594,16 +607,89 @@ export function Player({
     togglePlay()
   }
 
+  const onTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (!isPhoneUi() || event.touches.length !== 1) return
+    const target = event.target as HTMLElement
+    if (target.closest('button, input, .timeline, .player-menu')) return
+    const touch = event.touches[0]
+    if (touch.clientX <= 28 || touch.clientX >= window.innerWidth - 28) return
+    const video = videoRef.current
+    gestureRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      mode: null,
+      startTime: video?.currentTime ?? 0,
+      startVolume: volume,
+      startBrightness: brightness,
+    }
+  }
+
+  const onTouchMove = (event: ReactTouchEvent<HTMLDivElement>) => {
+    const state = gestureRef.current
+    if (!state || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    const dx = touch.clientX - state.x
+    const dy = touch.clientY - state.y
+    if (!state.mode) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 14) return
+      state.mode =
+        Math.abs(dx) > Math.abs(dy)
+          ? 'seek'
+          : touch.clientX < window.innerWidth / 2
+            ? 'brightness'
+            : 'volume'
+    }
+
+    const video = videoRef.current
+    if (state.mode === 'seek' && video) {
+      const max = Number.isFinite(video.duration) ? video.duration : 0
+      const delta = Math.round((dx / window.innerWidth) * 120)
+      const target = Math.min(Math.max(0, state.startTime + delta), Math.max(0, max - 1))
+      video.currentTime = target
+      setGesture({
+        kind: 'seek',
+        text: `${delta >= 0 ? '快进' : '后退'} ${formatTime(Math.abs(delta))} · ${formatTime(target)}`,
+      })
+      return
+    }
+
+    if (state.mode === 'volume') {
+      const next = Math.min(1, Math.max(0, state.startVolume - dy / 300))
+      setVolume(next)
+      setMuted(next === 0)
+      setGesture({ kind: 'volume', text: `音量 ${Math.round(next * 100)}%` })
+      return
+    }
+
+    if (state.mode === 'brightness') {
+      const next = Math.min(1.6, Math.max(0.3, state.startBrightness - dy / 300))
+      setBrightness(next)
+      setGesture({ kind: 'brightness', text: `亮度 ${Math.round(next * 100)}%` })
+    }
+  }
+
+  const onTouchEnd = () => {
+    if (gestureRef.current?.mode) reveal()
+    gestureRef.current = null
+    window.setTimeout(() => setGesture(null), 500)
+  }
+
   const qualityLabel =
     level < 0 ? '自动' : levels.find((item) => item.index === level)?.label ?? '清晰度'
   const progress = duration > 0 ? currentTime / duration : 0
   const volumeValue = muted ? 0 : volume
 
   return (
-    <div className={`player ${forceRotate ? 'force-landscape' : ''} ${fit === 'cover' ? 'fit-cover' : ''}`}>
+    <div
+      className={`player ${forceRotate ? 'force-landscape' : ''} ${fit === 'cover' ? 'fit-cover' : ''}`}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <video
         ref={videoRef}
         playsInline
+        style={brightness !== 1 ? { filter: `brightness(${brightness})` } : undefined}
         onTimeUpdate={onTimeUpdate}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
@@ -649,6 +735,8 @@ export function Player({
       ) : null}
 
       {notice ? <div className="player-notice">{notice}</div> : null}
+
+      {gesture ? <div className={`player-gesture ${gesture.kind}`}>{gesture.text}</div> : null}
 
       <div
         className={`player-ui ${showUi ? 'show' : ''}`}

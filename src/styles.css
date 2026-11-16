@@ -3374,3 +3374,30 @@ body.is-locked {
 .player.fit-cover > video {
   object-fit: cover;
 }
+
+/* 手机播放器手势提示 */
+.player-gesture {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 7;
+  transform: translate(-50%, -50%);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(12, 12, 16, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.player-gesture.volume {
+  background: rgba(23, 23, 30, 0.86);
+}
+
+.player-gesture.brightness {
+  background: rgba(23, 23, 30, 0.86);
+}

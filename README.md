@@ -32,6 +32,7 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 - **底部五栏导航**（首页 / 分类 / 搜索 / 片库 / 设置），拇指可达，打开详情或播放器时自动收起；
 - **左右边缘滑动返回**：从屏幕左/右边缘向内滑，关闭详情、搜索、设置、片库，分类页返回首页；
+- **播放器手势**：横向滑动快进/后退，左半屏上下调亮度、右半屏上下调音量，点按显隐控制条；
 - 适配 **刘海 / 灵动岛 / 底部手势条**，顶栏、面板、播放器都带安全区；
 - Hero 改为「顶部悬浮海报 + 底部标题」，矮屏（≤ 640px 高）自动隐藏海报、收紧按钮；
 - 详情页 **4 列选集**、粘性返回按钮 + 顶部渐变遮罩，滚动时不丢失返回入口；
@@ -130,12 +131,12 @@ npm run share
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.8_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.8_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.8_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.8_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.8_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.8_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.9_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.9_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.9_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.9_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.9_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.9_x64_en-US.msi` |
 | **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
 | **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 
