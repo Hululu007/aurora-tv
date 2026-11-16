@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import type { PlaybackState } from '../core/types'
-import { focusFirst, setNavLock } from '../core/nav'
+import { isPhoneUi, setNavLock } from '../core/nav'
 import { formatTime, isMediaUrl } from '../core/format'
 import {
+  Back10Icon,
   ChevronLeft,
   CloseIcon,
+  Forward10Icon,
+  HdIcon,
   PauseIcon,
   PlayIcon,
+  RotateIcon,
   SkipNextIcon,
-  Back10Icon,
-  Forward10Icon,
+  SpeedIcon,
+  VolumeHighIcon,
+  VolumeMuteIcon,
 } from '../components/Icons'
 
 interface PlayerProps {
@@ -27,6 +32,10 @@ interface PlayerProps {
   }) => void
 }
 
+type MenuKind = 'speed' | 'quality' | null
+
+const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
 export function Player({
   state,
   autoNext,
@@ -39,6 +48,7 @@ export function Player({
   const hlsRef = useRef<Hls | null>(null)
   const hideTimer = useRef<number | null>(null)
   const lastSave = useRef(0)
+  const menuRef = useRef<MenuKind>(null)
 
   const [groupIndex, setGroupIndex] = useState(state.groupIndex)
   const [episodeIndex, setEpisodeIndex] = useState(state.episodeIndex)
@@ -52,18 +62,44 @@ export function Player({
   const [reloadKey, setReloadKey] = useState(0)
   const [resolvedUrl, setResolvedUrl] = useState('')
   const [resolving, setResolving] = useState(false)
+  const [volume, setVolume] = useState(1)
+  const [muted, setMuted] = useState(false)
+  const [rate, setRate] = useState(1)
+  const [levels, setLevels] = useState<Array<{ index: number; label: string }>>([])
+  const [level, setLevel] = useState(-1)
+  const [menu, setMenu] = useState<MenuKind>(null)
+  const [landscape, setLandscape] = useState(false)
+  const [forceRotate, setForceRotate] = useState(false)
+  const [notice, setNotice] = useState('')
 
   const group = state.groups[groupIndex]
   const episode = group?.episodes[episodeIndex]
   const rawUrl = episode?.url ?? ''
 
+  menuRef.current = menu
+
+  const releaseOrientation = useCallback(() => {
+    try {
+      const orientation = screen.orientation as ScreenOrientation & {
+        unlock?: () => void
+      }
+      orientation?.unlock?.()
+    } catch {
+      /* ignore */
+    }
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {})
+    }
+  }, [])
+
   const reveal = useCallback(() => {
     setShowUi(true)
     if (hideTimer.current) window.clearTimeout(hideTimer.current)
     hideTimer.current = window.setTimeout(() => {
+      if (menuRef.current) return
       setShowUi(false)
       setFocusIndex(-1)
-    }, 3800)
+    }, 4200)
   }, [])
 
   useEffect(() => {
@@ -77,8 +113,26 @@ export function Player({
       if (hideTimer.current) window.clearTimeout(hideTimer.current)
       hlsRef.current?.destroy()
       hlsRef.current = null
+      releaseOrientation()
     }
-  }, [reveal])
+  }, [reveal, releaseOrientation])
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(''), 3200)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setLandscape(false)
+        setForceRotate(false)
+      }
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
 
   // 解析非直链地址（TVBox parses）
   useEffect(() => {
@@ -125,6 +179,9 @@ export function Player({
     if (!video || !resolvedUrl) return
     setError(null)
     setPlaying(true)
+    setLevels([])
+    setLevel(-1)
+    setMenu(null)
 
     if (hlsRef.current) {
       hlsRef.current.destroy()
@@ -143,6 +200,13 @@ export function Player({
       hlsRef.current = hls
       hls.loadSource(resolvedUrl)
       hls.attachMedia(video)
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        const list = hls.levels.map((item, index) => ({
+          index,
+          label: item.height ? `${item.height}P` : `${Math.round((item.bitrate || 0) / 1000)}K`,
+        }))
+        setLevels(list)
+      })
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (!data.fatal) return
         const message =
@@ -157,8 +221,12 @@ export function Player({
       video.src = resolvedUrl
     }
 
-    const start = state.startTime ?? 0
+    const isInitial = groupIndex === state.groupIndex && episodeIndex === state.episodeIndex
+    const start = isInitial ? state.startTime ?? 0 : 0
     const onLoaded = () => {
+      video.volume = volume
+      video.muted = muted
+      video.playbackRate = rate
       if (start > 0 && Number.isFinite(video.duration)) {
         video.currentTime = Math.min(start, Math.max(0, video.duration - 3))
       }
@@ -173,6 +241,25 @@ export function Player({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedUrl, reloadKey])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.volume = volume
+    video.muted = muted
+  }, [volume, muted, resolvedUrl])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.playbackRate = rate
+  }, [rate, resolvedUrl])
+
+  useEffect(() => {
+    const hls = hlsRef.current
+    if (!hls || !hls.levels.length) return
+    hls.currentLevel = level
+  }, [level])
 
   const saveProgress = useCallback(
     (force = false) => {
@@ -195,6 +282,12 @@ export function Player({
     return () => saveProgress(true)
   }, [saveProgress])
 
+  const closePlayer = useCallback(() => {
+    saveProgress(true)
+    releaseOrientation()
+    onClose()
+  }, [onClose, releaseOrientation, saveProgress])
+
   const togglePlay = useCallback(() => {
     const video = videoRef.current
     if (!video) return
@@ -207,6 +300,58 @@ export function Player({
     }
     reveal()
   }, [reveal])
+
+  const toggleMute = useCallback(() => {
+    setMuted((current) => {
+      if (current) {
+        if (volume === 0) setVolume(0.8)
+        return false
+      }
+      return true
+    })
+    reveal()
+  }, [reveal, volume])
+
+  const changeVolume = useCallback(
+    (next: number) => {
+      const value = Math.min(1, Math.max(0, next))
+      setVolume(value)
+      setMuted(value === 0)
+      reveal()
+    },
+    [reveal],
+  )
+
+  const toggleLandscape = useCallback(async () => {
+    reveal()
+    setMenu(null)
+    if (landscape) {
+      releaseOrientation()
+      setLandscape(false)
+      setForceRotate(false)
+      return
+    }
+
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+      }
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (value: string) => Promise<void>
+      }
+      if (orientation?.lock) {
+        await orientation.lock('landscape')
+        setForceRotate(false)
+      } else {
+        setForceRotate(true)
+      }
+    } catch {
+      // 部分 WebView 不支持方向锁定，用 CSS 旋转兜底
+      setForceRotate(true)
+      setNotice('当前环境不支持自动横屏，已旋转画面，请横过来拿手机')
+    }
+    setLandscape(true)
+  }, [landscape, releaseOrientation, reveal])
 
   const seekBy = useCallback(
     (delta: number) => {
@@ -249,9 +394,9 @@ export function Player({
       { id: 'back', label: '-10 秒', run: () => seekBy(-seekStep) },
       { id: 'forward', label: '+10 秒', run: () => seekBy(seekStep) },
       { id: 'next', label: '下一集', run: () => playEpisode(episodeIndex + 1) },
-      { id: 'close', label: '退出', run: onClose },
+      { id: 'close', label: '退出', run: closePlayer },
     ],
-    [episodeIndex, onClose, playEpisode, playing, seekBy, seekStep, togglePlay],
+    [closePlayer, episodeIndex, playEpisode, playing, seekBy, seekStep, togglePlay],
   )
 
   // 播放器专用按键：方向键调进度，上/下切换按钮，回车执行
@@ -260,8 +405,7 @@ export function Player({
       const key = event.key
       if (key === 'Escape' || key === 'BrowserBack') {
         event.preventDefault()
-        saveProgress(true)
-        onClose()
+        closePlayer()
         return
       }
       if (key === ' ' || key === 'Enter') {
@@ -298,11 +442,30 @@ export function Player({
       if (key === 'n' || key === 'N') {
         playEpisode(episodeIndex + 1)
       }
+      if (key === 'f' || key === 'F') {
+        void toggleLandscape()
+      }
+      if (key === 'm' || key === 'M') {
+        toggleMute()
+      }
       reveal()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [buttons, episodeIndex, focusIndex, onClose, playEpisode, reveal, saveProgress, seekBy, seekStep, togglePlay])
+  }, [
+    buttons,
+    closePlayer,
+    episodeIndex,
+    focusIndex,
+    playEpisode,
+    reveal,
+    saveProgress,
+    seekBy,
+    seekStep,
+    toggleLandscape,
+    toggleMute,
+    togglePlay,
+  ])
 
   const onTimeUpdate = () => {
     const video = videoRef.current
@@ -324,10 +487,29 @@ export function Player({
     }
   }
 
+  const onVideoTap = () => {
+    if (!showUi) {
+      reveal()
+      return
+    }
+    if (menu) {
+      setMenu(null)
+      return
+    }
+    if (isPhoneUi()) {
+      setShowUi(false)
+      return
+    }
+    togglePlay()
+  }
+
+  const qualityLabel =
+    level < 0 ? '自动' : levels.find((item) => item.index === level)?.label ?? '清晰度'
   const progress = duration > 0 ? currentTime / duration : 0
+  const volumeValue = muted ? 0 : volume
 
   return (
-    <div className="player">
+    <div className={`player ${forceRotate ? 'force-landscape' : ''}`}>
       <video
         ref={videoRef}
         playsInline
@@ -337,7 +519,7 @@ export function Player({
         onEnded={nextEpisode}
         onDurationChange={(event) => setDuration(event.currentTarget.duration || 0)}
         onError={() => setError('视频加载失败，请换一条线路或稍后再试。')}
-        onClick={togglePlay}
+        onClick={onVideoTap}
       />
 
       {resolving ? (
@@ -367,7 +549,7 @@ export function Player({
               >
                 重试
               </button>
-              <button type="button" className="btn ghost" onClick={onClose}>
+              <button type="button" className="btn ghost" onClick={closePlayer}>
                 返回
               </button>
             </div>
@@ -375,25 +557,43 @@ export function Player({
         </div>
       ) : null}
 
-      <div className={`player-ui ${showUi ? 'show' : ''}`}>
+      {notice ? <div className="player-notice">{notice}</div> : null}
+
+      <div
+        className={`player-ui ${showUi ? 'show' : ''}`}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return
+          setMenu(null)
+          setShowUi(false)
+        }}
+      >
         <div className="player-top">
-          <div className="player-heading">
-            <h2>{state.title}</h2>
-            <p>
-              {episode?.name}
-              {state.groups.length > 1 ? ` · ${group?.name}` : ''}
-              {state.subtitle ? ` · ${state.subtitle}` : ''}
-            </p>
+          <div className="player-top-left">
+            <button type="button" className="player-back" onClick={closePlayer}>
+              <ChevronLeft width={20} height={20} />
+              返回
+            </button>
+            <div className="player-heading">
+              <h2>{state.title}</h2>
+              <p>
+                {episode?.name}
+                {state.groups.length > 1 ? ` · ${group?.name}` : ''}
+                {state.subtitle ? ` · ${state.subtitle}` : ''}
+              </p>
+            </div>
           </div>
-          <button type="button" className="icon-btn" onClick={onClose} title="关闭">
+          <button type="button" className="icon-btn" onClick={closePlayer} title="关闭">
             <CloseIcon />
           </button>
         </div>
 
-        <span className="rotate-hint">横屏观看更沉浸</span>
-
         <div className="player-center">
-          <button type="button" className="big-play" onClick={togglePlay} aria-label={playing ? '暂停' : '播放'}>
+          <button
+            type="button"
+            className="big-play"
+            onClick={togglePlay}
+            aria-label={playing ? '暂停' : '播放'}
+          >
             {playing ? <PauseIcon width={30} height={30} /> : <PlayIcon width={30} height={30} />}
           </button>
         </div>
@@ -404,7 +604,10 @@ export function Player({
             onClick={(event) => onSeekPointer(event.clientX, event.currentTarget)}
           >
             <div className="timeline-track">
-              <div className="timeline-buffer" style={{ width: `${duration ? (buffered / duration) * 100 : 0}%` }} />
+              <div
+                className="timeline-buffer"
+                style={{ width: `${duration ? (buffered / duration) * 100 : 0}%` }}
+              />
               <div className="timeline-fill" style={{ width: `${progress * 100}%` }} />
               <div className="timeline-knob" style={{ left: `${progress * 100}%` }} />
             </div>
@@ -450,7 +653,115 @@ export function Player({
               {formatTime(currentTime)} <span style={{ opacity: 0.4 }}>/ {formatTime(duration)}</span>
             </div>
           </div>
+
+          <div className="player-tools">
+            <div className="volume-control">
+              <button type="button" className="pbtn" onClick={toggleMute} aria-label={muted ? '取消静音' : '静音'}>
+                {muted || volume === 0 ? (
+                  <VolumeMuteIcon width={18} height={18} />
+                ) : (
+                  <VolumeHighIcon width={18} height={18} />
+                )}
+              </button>
+              <input
+                className="volume-range"
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volumeValue}
+                aria-label="音量"
+                onChange={(event) => changeVolume(Number(event.target.value))}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="pbtn"
+              onClick={() => {
+                setMenu(menu === 'speed' ? null : 'speed')
+                reveal()
+              }}
+            >
+              <SpeedIcon width={17} height={17} />
+              {rate}x
+            </button>
+
+            <button
+              type="button"
+              className="pbtn"
+              disabled={!levels.length}
+              onClick={() => {
+                setMenu(menu === 'quality' ? null : 'quality')
+                reveal()
+              }}
+            >
+              <HdIcon width={17} height={17} />
+              {levels.length ? qualityLabel : '清晰度'}
+            </button>
+
+            <button type="button" className="pbtn" onClick={() => void toggleLandscape()}>
+              <RotateIcon width={17} height={17} />
+              {landscape ? '竖屏' : '横屏'}
+            </button>
+
+            <button type="button" className="pbtn" onClick={closePlayer}>
+              <ChevronLeft width={17} height={17} />
+              返回
+            </button>
+          </div>
         </div>
+
+        {menu ? (
+          <div className={`player-menu ${menu}`} onClick={(event) => event.stopPropagation()}>
+            <div className="player-menu-title">{menu === 'speed' ? '播放速度' : '清晰度'}</div>
+            <div className="player-menu-list">
+              {menu === 'speed'
+                ? RATES.map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`menu-item ${rate === value ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setRate(value)
+                        setMenu(null)
+                        reveal()
+                      }}
+                    >
+                      {value}x
+                    </button>
+                  ))
+                : [
+                    <button
+                      key="auto"
+                      type="button"
+                      className={`menu-item ${level === -1 ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setLevel(-1)
+                        setMenu(null)
+                        reveal()
+                      }}
+                    >
+                      自动
+                    </button>,
+                    ...levels.map((item) => (
+                      <button
+                        key={item.index}
+                        type="button"
+                        className={`menu-item ${level === item.index ? 'is-active' : ''}`}
+                        onClick={() => {
+                          setLevel(item.index)
+                          setMenu(null)
+                          reveal()
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    )),
+                  ]}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

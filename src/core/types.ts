@@ -64,10 +64,13 @@ export interface Vod {
   vod_director?: string
   vod_content?: string
   vod_score?: string | number
+  vod_hits?: string | number
+  vod_hits_day?: string | number
+  vod_up?: string | number
+  vod_time?: string
   type_name?: string
   vod_play_from?: string
   vod_play_url?: string
-  vod_time?: string
 }
 
 export interface VodClass {
@@ -94,6 +97,9 @@ export interface CatalogItem {
   year?: string
   area?: string
   score?: string
+  hits?: number
+  hitsDay?: number
+  updatedAt?: string
   typeName?: string
   desc?: string
   actor?: string

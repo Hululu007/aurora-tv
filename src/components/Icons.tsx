@@ -172,6 +172,56 @@ export function CheckIcon(props: IconProps) {
   )
 }
 
+export function VolumeHighIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9.5v5h3.2L12 18V6L7.2 9.5H4Z" />
+      <path d="M15.4 9.2a4 4 0 0 1 0 5.6" />
+      <path d="M17.9 6.7a7.4 7.4 0 0 1 0 10.6" />
+    </svg>
+  )
+}
+
+export function VolumeMuteIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9.5v5h3.2L12 18V6L7.2 9.5H4Z" />
+      <path d="m16 10 4 4M20 10l-4 4" />
+    </svg>
+  )
+}
+
+export function SpeedIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="13" r="7.4" />
+      <path d="M12 13l3.6-3.8" />
+      <path d="M5.4 13h1.6M17 13h1.6M12 5.6V7" />
+    </svg>
+  )
+}
+
+export function HdIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.4" y="5.4" width="17.2" height="13.2" rx="2.2" />
+      <text x="12" y="15.2" fontSize="7.4" textAnchor="middle" fill="currentColor" stroke="none" fontWeight="800">
+        HD
+      </text>
+    </svg>
+  )
+}
+
+export function RotateIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="8.2" y="3.4" width="7.6" height="12.2" rx="1.8" />
+      <path d="M5.2 16.2a8 8 0 0 0 13.6 0" />
+      <path d="M18.8 14.4v3.6h-3.6" />
+    </svg>
+  )
+}
+
 export function SparkIcon(props: IconProps) {
   return (
     <svg {...base} {...props} fill="currentColor" stroke="none">

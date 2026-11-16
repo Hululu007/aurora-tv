@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CatalogItem, Site, VodClass } from '../core/types'
 import {
   CATEGORIES,
+  SORTS,
   categoryDef,
   fetchCategoryItems,
+  sortCategoryItems,
   type CategoryId,
+  type SortKey,
 } from '../core/categories'
 import { fetchClasses } from '../core/tvbox'
 import { getProxy } from '../core/net'
@@ -20,6 +23,7 @@ interface CategoryViewProps {
 
 export function CategoryView({ site, demo, onOpen, onOpenSources }: CategoryViewProps) {
   const [active, setActive] = useState<CategoryId>('movie')
+  const [sort, setSort] = useState<SortKey>('default')
   const [items, setItems] = useState<CatalogItem[]>([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -94,10 +98,12 @@ export function CategoryView({ site, demo, onOpen, onOpenSources }: CategoryView
 
   const emptyText =
     active === 'ai'
-      ? '当前站点没有「AI短剧」分类，去片库换一个站点试试。'
+      ? '当前站点没有「动漫短剧」分类，去片库换一个站点试试。'
       : active === 'short'
         ? '当前站点没有「短剧」分类，去片库换一个站点试试。'
         : '当前站点这个分类没有返回内容，换一个分类或站点试试。'
+
+  const visibleItems = useMemo(() => sortCategoryItems(items, sort), [items, sort])
 
   return (
     <section className="category-page">
@@ -129,6 +135,21 @@ export function CategoryView({ site, demo, onOpen, onOpenSources }: CategoryView
         ))}
       </div>
 
+      <div className="sort-row" role="group" aria-label="排序方式">
+        <span className="sort-label">排序</span>
+        {SORTS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className={`sort-chip ${option.id === sort ? 'is-active' : ''}`}
+            data-nav
+            onClick={() => setSort(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
       <div className="category-body">
         {loading ? (
           <div className="category-grid">
@@ -152,7 +173,7 @@ export function CategoryView({ site, demo, onOpen, onOpenSources }: CategoryView
         ) : items.length ? (
           <>
             <div className="category-grid">
-              {items.map((item, index) => (
+              {visibleItems.map((item, index) => (
                 <Card key={`${item.id}-${index}`} item={item} index={index} onOpen={onOpen} />
               ))}
             </div>

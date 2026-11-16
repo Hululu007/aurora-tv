@@ -68,9 +68,9 @@ export const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'ai',
-    label: 'AI短剧',
+    label: '动漫短剧',
     demoTypes: [],
-    match: (name) => /ai/i.test(name),
+    match: (name) => /动漫短剧|ai\s*短剧|ai短剧/i.test(name),
   },
   {
     id: 'variety',
@@ -86,6 +86,37 @@ export function categoryDef(id: CategoryId): CategoryDef {
 
 export function classesForCategory(classes: VodClass[], def: CategoryDef): VodClass[] {
   return classes.filter((item) => def.match(String(item.type_name))).slice(0, 4)
+}
+
+export type SortKey = 'default' | 'time' | 'score' | 'hits' | 'heat'
+
+export const SORTS: Array<{ id: SortKey; label: string }> = [
+  { id: 'default', label: '默认' },
+  { id: 'time', label: '时间' },
+  { id: 'score', label: '评分' },
+  { id: 'hits', label: '人气' },
+  { id: 'heat', label: '热度' },
+]
+
+function timeValue(item: CatalogItem): number {
+  if (!item.updatedAt) return 0
+  const parsed = Date.parse(item.updatedAt)
+  if (Number.isFinite(parsed)) return parsed
+  const numeric = Number(item.updatedAt)
+  return Number.isFinite(numeric) ? numeric * 1000 : 0
+}
+
+export function sortCategoryItems(items: CatalogItem[], sort: SortKey): CatalogItem[] {
+  if (sort === 'default' || items.length < 2) return items
+
+  const value = (item: CatalogItem): number => {
+    if (sort === 'time') return timeValue(item)
+    if (sort === 'score') return Number.parseFloat(item.score ?? '0') || 0
+    if (sort === 'hits') return item.hits ?? 0
+    return item.hitsDay || item.hits || 0
+  }
+
+  return [...items].sort((a, b) => value(b) - value(a))
 }
 
 export async function fetchCategoryItems(
