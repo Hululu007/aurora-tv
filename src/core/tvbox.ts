@@ -241,8 +241,9 @@ export function pickRowClasses(classes: VodClass[], limit = 6): VodClass[] {
   return picked
 }
 
-export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Array<{ key: string; title: string; items: CatalogItem[] }>; classes: VodClass[] }> {  const classes = await fetchClasses(site.api, proxy)
-  const picks = pickRowClasses(classes, 5)
+export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Array<{ key: string; title: string; items: CatalogItem[] }>; classes: VodClass[] }> {
+  const classes = await fetchClasses(site.api, proxy)
+  const picks = pickRowClasses(classes, 10)
   const results = await Promise.all(
     picks.map(async (cls) => {
       try {
@@ -259,18 +260,50 @@ export async function buildRows(site: Site, proxy?: string): Promise<{ rows: Arr
     }),
   )
 
-  const rows = results.filter((row) => row.items.length > 0)
+  const nonEmpty = results.filter((row) => row.items.length > 0)
+  // 有些站点给的是“电影片/动漫片”这种空分类，优先保留内容较多的分类
+  const rich = nonEmpty.filter((row) => row.items.length >= 4)
+  let rows = (rich.length >= 2 ? rich : nonEmpty).slice(0, 5)
 
-  // 有些站点按分类取不到数据，但“最新更新”总有内容：补一条兜底行
+  // 有些站点按分类取不到数据，但“最新更新”总有内容：拉两页并按类型拆成多行
   if (rows.length < 2) {
     try {
-      const latest = await fetchList(site.api, undefined, 1, proxy)
-      if (latest.length) {
-        rows.push({
-          key: '__latest',
-          title: '最新更新',
-          items: latest.map((v) => toItem(v, site)).filter((i) => i.id),
-        })
+      const batches = await Promise.all(
+        [1, 2].map((page) => fetchList(site.api, undefined, page, proxy).catch(() => [])),
+      )
+      const seen = new Set<string>()
+      const items: CatalogItem[] = []
+      for (const vod of batches.flat()) {
+        const item = toItem(vod, site)
+        if (!item.id || seen.has(item.id)) continue
+        seen.add(item.id)
+        items.push(item)
+      }
+
+      if (items.length) {
+        const groups = new Map<string, CatalogItem[]>()
+        for (const item of items) {
+          const title =
+            String(item.typeName ?? '')
+              .split(/[\/|｜]/)
+              .filter(Boolean)
+              .pop()
+              ?.trim() || '最新更新'
+          const group = groups.get(title) ?? []
+          group.push(item)
+          groups.set(title, group)
+        }
+
+        const grouped = [...groups.entries()]
+          .sort((a, b) => b[1].length - a[1].length)
+          .slice(0, 5)
+          .map(([title, list]) => ({
+            key: `latest-${title}`,
+            title,
+            items: list.slice(0, 30),
+          }))
+
+        if (grouped.length > rows.length) rows = grouped
       }
     } catch {
       /* 忽略 */

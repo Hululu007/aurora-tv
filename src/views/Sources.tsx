@@ -158,6 +158,7 @@ export function Sources({
                       <div className="source-meta">{hostOf(site.api)}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {site.sourceIndex === -1 ? <span className="tag ok">内置</span> : null}
                       {site.searchable ? <span className="tag ok">可搜索</span> : null}
                       {activeSite?.key === site.key ? <span className="tag">使用中</span> : null}
                     </div>

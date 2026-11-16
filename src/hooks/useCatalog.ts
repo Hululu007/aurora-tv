@@ -23,6 +23,7 @@ import {
   toSites,
 } from '../core/tvbox'
 import { DEMO_HERO, DEMO_ROWS } from '../core/demo'
+import { BUILTIN_SITES, withBuiltinSites } from '../core/builtin'
 
 export interface Catalog {
   phase: 'loading' | 'ready' | 'error'
@@ -70,6 +71,7 @@ function rankSites(sites: Site[], preferredKey: string): Site[] {
   const score = (site: Site) => {
     let value = 0
     if (site.key === preferredKey) value -= 100
+    if (site.sourceIndex === -1) value -= 60
     try {
       const host = new URL(site.api).host
       if (KNOWN_GOOD_HOSTS.some((known) => host.includes(known))) value -= 50
@@ -175,8 +177,17 @@ export function useCatalog(settings: Settings): Catalog {
     }
 
     void (async () => {
+      const builtins = BUILTIN_SITES
+      const supportedFromConfig: Site[] = []
+      const combined: Site[] = [...builtins]
+      const failures: string[] = []
+      let list: MultiUrl[] = []
+
+      // 先把内置站点放进片源列表：即使聚合配置全挂也能用
+      setSites(builtins)
+
       try {
-        const list = await loadMulti(settings.data.configUrl, proxy)
+        list = await loadMulti(settings.data.configUrl, proxy)
         if (ticket !== runId.current) return
         setSources(list)
 
@@ -195,9 +206,6 @@ export function useCatalog(settings: Settings): Catalog {
         for (let i = 0; i < list.length; i += 1) push(i)
 
         const triedSources = order.slice(0, 4)
-        const combined: Site[] = []
-        const failures: string[] = []
-
         for (const index of triedSources) {
           if (ticket !== runId.current) return
           try {
@@ -208,21 +216,30 @@ export function useCatalog(settings: Settings): Catalog {
               failures.push(`${list[index].name} 无 CMS 站点`)
               continue
             }
+            supportedFromConfig.push(...supported)
             combined.push(...supported)
-            setSites(supported)
+            setSites(withBuiltinSites(supportedFromConfig))
             setSourceIndex(index)
           } catch (err) {
             failures.push(`${list[index].name}: ${describeError(err)}`)
           }
         }
+      } catch (err) {
+        failures.push(describeError(err))
+      }
 
-        if (!combined.length) {
-          throw new Error(
-            `自动探测的 ${triedSources.length} 个源里没有可直接播放的站点。${failures[0] ?? ''}`,
-          )
+      try {
+        if (ticket !== runId.current) return
+        const chosen = await activateFirstWorking(combined, proxy)
+
+        if (chosen.sourceIndex === -1) {
+          setSites(withBuiltinSites(supportedFromConfig))
+          setSourceIndex(-1)
+          setParses([])
+          localStorage.setItem('aurora.lastSource', '-1')
+          return
         }
 
-        const chosen = await activateFirstWorking(combined, proxy)
         setSources(list)
         setSourceIndex(chosen.sourceIndex)
         const chosenConfig = await withTimeout(
@@ -230,13 +247,18 @@ export function useCatalog(settings: Settings): Catalog {
           14000,
         ).catch(() => null)
         if (chosenConfig) {
-          setSites(toSites(chosenConfig, chosen.sourceIndex))
+          setSites(withBuiltinSites(toSites(chosenConfig, chosen.sourceIndex)))
           setParses(normalizeParses(chosenConfig))
+        } else {
+          setSites(withBuiltinSites(supportedFromConfig))
         }
         localStorage.setItem('aurora.lastSource', String(chosen.sourceIndex))
       } catch (err) {
         if (ticket !== runId.current) return
-        const message = describeError(err)
+        const message =
+          failures.length && !supportedFromConfig.length
+            ? `${describeError(err)}（聚合源：${failures[0]}）`
+            : describeError(err)
         setError(message)
         gotoDemo()
         setPhase('error')
@@ -274,7 +296,7 @@ export function useCatalog(settings: Settings): Catalog {
         const config = await loadSourceConfig(list[index].url, proxy)
         if (ticket !== runId.current) return
         const supported = toSites(config, index)
-        setSites(supported)
+        setSites(withBuiltinSites(supported))
         if (!supported.length) throw new Error('这个源没有可直接播放的 CMS 站点')
         setParses(normalizeParses(config))
         await activateFirstWorking(supported, proxy)
@@ -315,7 +337,7 @@ export function useCatalog(settings: Settings): Catalog {
         searchable: true,
         sourceIndex: -1,
       }
-      setSites((current) => [custom, ...current])
+      setSites((current) => withBuiltinSites([custom, ...current]))
       await selectSite(custom)
     },
     [selectSite],

@@ -57,6 +57,7 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 - **解析线路**：CMS 返回网页播放地址时，自动调用配置里的 `parses` 解析成 m3u8 直链（最多 5 条、9 秒超时）；
 - 「继续观看」行、播放进度写入本地；
 - 设置面板 20+ 项可调，实时生效并持久化；
+- **内置 5 个 CMS 站点**（电影天堂 / 非凡 / 光速 / 量子 / 素博），不依赖 tvbox-multi 配置，配置源全挂也能播；
 - **三端播放记录自动同步**：局域网 / WebDAV / GitHub Gist 三种方式，观看进度自动合并；
 - **手动同步码**：把设置 + 片源 + 观看进度打包成一段文本，离线也能搬到另一台设备；
 - Windows / Android 使用 Tauri 原生 `fetch`，**不依赖浏览器代理、不受 CORS 限制**。
@@ -77,6 +78,23 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 浏览器模式还有一个额外限制：CMS 接口和图片需要经本地代理（`npm run proxy`），HLS 分片则要求源站允许跨域；Windows / Android 客户端没有这个问题。
 
+## 内置片源
+
+除了读取你的 tvbox-multi 配置，App 还内置了 5 个常用苹果 CMS 站点：
+
+| 站点 | 接口 |
+| --- | --- |
+| 电影天堂 | `caiji.dyttzyapi.com` |
+| 非凡资源 | `api.ffzyapi.com` |
+| 光速资源 | `api.guangsuapi.com` |
+| 量子资源 | `cj.lziapi.com` |
+| 素博资源 | `subocaiji.com` |
+
+它们不依赖任何配置文件：即使 tvbox-multi 打不开，启动后也会自动选中其中一个可用的内置站点。
+在「片库」里可以看到带「内置」标签的条目，随时切换；聚合源里同接口的站点会自动去重。
+
+内置站点大多同时提供「分享页」和「m3u8」两条线路，App 会优先选直链 m3u8。
+
 ## 快速开始
 
 ### 下载现成安装包
@@ -86,12 +104,12 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.4_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.4_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.4_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.4_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.4_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.4_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.5_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.5_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.5_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.5_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.5_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.5_x64_en-US.msi` |
 
 手机端和电视端是**两个不同的 APK**：
 
