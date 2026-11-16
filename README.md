@@ -95,6 +95,23 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 内置站点大多同时提供「分享页」和「m3u8」两条线路，App 会优先选直链 m3u8。
 
+## 鸿蒙 HarmonyOS
+
+- **HarmonyOS 4.x / 4.2**：系统兼容 Android 应用，直接安装上面的**手机端 APK**；
+- **HarmonyOS NEXT 5.x**：不再支持 APK，需要 HAP。仓库当前不提供 HAP 安装包，
+  可以用网页 / PWA 方式把手机当客户端：
+
+```bash
+npm run build
+npm run share
+# 手机浏览器打开终端里打印的 http://电脑IP:4173
+```
+
+完整步骤、代理设置和限制见 **[docs/HARMONY.md](docs/HARMONY.md)**。
+
+> 为什么没有直接给 HAP：HAP 需要 DevEco Studio + HarmonyOS SDK 编译，并用华为签名证书 / Profile 签名，
+> 这些必须在你自己的华为开发者账号下完成。原生 ArkWeb 容器的方案已经写在文档里，可以在 DevEco 里继续。
+
 ## 快速开始
 
 ### 下载现成安装包
@@ -110,6 +127,8 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 | **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.5_tv-armeabi-v7a.apk` |
 | **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.5_x64-setup.exe` |
 | **Windows 端** | MSI 部署包 | `AuroraTV_0.1.5_x64_en-US.msi` |
+| **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
+| **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 
 手机端和电视端是**两个不同的 APK**：
 
@@ -273,6 +292,7 @@ aurora-tv/
 │  ├─ ARCHITECTURE.md
 │  ├─ BUILD.md
 │  ├─ SYNC.md
+│  ├─ HARMONY.md
 │  └─ screenshots/
 └─ index.html / vite.config.mjs
 ```

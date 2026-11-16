@@ -12,6 +12,7 @@
 import http from 'node:http'
 
 const PORT = Number(process.env.PORT || 8787)
+const LAN = process.argv.includes('--lan') || process.env.HOST === '0.0.0.0'
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36'
 const TIMEOUT = 25000
@@ -135,6 +136,7 @@ const server = http.createServer(async (request, response) => {
   )
 })
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[aurora] proxy ready at http://127.0.0.1:${PORT}`)
+server.listen(PORT, LAN ? '0.0.0.0' : '127.0.0.1', () => {
+  console.log(`[aurora] proxy ready at http://${LAN ? '0.0.0.0' : '127.0.0.1'}:${PORT}`)
+  if (LAN) console.log('[aurora] LAN mode: 手机 / 鸿蒙 NEXT 可用局域网 IP 访问')
 })
