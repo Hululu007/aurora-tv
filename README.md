@@ -84,13 +84,22 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 - **Releases**：<https://github.com/othellllo/aurora-tv/releases>
 - 或 Actions → [Build](https://github.com/othellllo/aurora-tv/actions/workflows/build.yml) → 最新运行 → Artifacts
 
-| 平台 | 文件 |
-| --- | --- |
-| Windows | `AuroraTV_0.1.3_x64-setup.exe` / `.msi` |
-| Android / TV（64 位） | `AuroraTV_0.1.3_arm64-v8a.apk` |
-| Android / TV（32 位旧盒子） | `AuroraTV_0.1.3_armeabi-v7a.apk` |
+| 端 | 适用设备 | 文件 |
+| --- | --- | --- |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.4_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.4_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.4_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.4_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.4_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.4_x64_en-US.msi` |
 
-APK 已用项目自带 keystore 做 release 签名，可直接安装；电视端已带 Leanback 入口与横屏。
+手机端和电视端是**两个不同的 APK**：
+
+- 手机端：不锁横屏、不注册 Leanback，装完从手机桌面启动；
+- 电视端：强制横屏、注册 Leanback 入口、带 320×180 banner，会出现在电视的「应用」行。
+
+两者包名相同（`com.auroratv.app`）、签名相同，同一台设备只需装其中一个；从手机版换电视版会直接覆盖安装。
+APK 均已用项目自带 keystore 做 release 签名。
 
 ### 0. 环境
 
