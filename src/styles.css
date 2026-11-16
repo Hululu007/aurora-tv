@@ -3369,3 +3369,8 @@ body.is-locked {
     width: 56px;
   }
 }
+
+/* 电视 / Windows：铺满屏幕 */
+.player.fit-cover > video {
+  object-fit: cover;
+}

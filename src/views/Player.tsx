@@ -7,7 +7,9 @@ import {
   Back10Icon,
   ChevronLeft,
   CloseIcon,
+  FitIcon,
   Forward10Icon,
+  FullscreenIcon,
   HdIcon,
   PauseIcon,
   PlayIcon,
@@ -70,7 +72,12 @@ export function Player({
   const [menu, setMenu] = useState<MenuKind>(null)
   const [landscape, setLandscape] = useState(false)
   const [forceRotate, setForceRotate] = useState(false)
+  const [fit, setFit] = useState<'contain' | 'cover'>('contain')
+  const [fullscreen, setFullscreen] = useState(false)
   const [notice, setNotice] = useState('')
+  const phoneLayout = isPhoneUi()
+  const handheld = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)
+  const showLandscape = phoneLayout && handheld && !/Windows/i.test(navigator.userAgent)
 
   const group = state.groups[groupIndex]
   const episode = group?.episodes[episodeIndex]
@@ -125,6 +132,7 @@ export function Player({
 
   useEffect(() => {
     const onFullscreenChange = () => {
+      setFullscreen(!!document.fullscreenElement)
       if (!document.fullscreenElement) {
         setLandscape(false)
         setForceRotate(false)
@@ -353,6 +361,26 @@ export function Player({
     setLandscape(true)
   }, [landscape, releaseOrientation, reveal])
 
+  const toggleFullscreen = useCallback(async () => {
+    reveal()
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+      } else {
+        setNotice('当前环境不支持全屏')
+      }
+    } catch {
+      setNotice('全屏切换失败，请用系统窗口全屏')
+    }
+  }, [reveal])
+
+  const toggleFit = useCallback(() => {
+    setFit((current) => (current === 'cover' ? 'contain' : 'cover'))
+    reveal()
+  }, [reveal])
+
   const seekBy = useCallback(
     (delta: number) => {
       const video = videoRef.current
@@ -410,8 +438,8 @@ export function Player({
     reveal()
   }, [level, levels, reveal])
 
-  const buttons = useMemo(
-    () => [
+  const buttons = useMemo(() => {
+    const list = [
       { id: 'play', label: playing ? '暂停' : '播放', run: togglePlay },
       { id: 'back', label: '-10 秒', run: () => seekBy(-seekStep) },
       { id: 'forward', label: '+10 秒', run: () => seekBy(seekStep) },
@@ -419,26 +447,45 @@ export function Player({
       { id: 'mute', label: muted ? '取消静音' : '静音', run: toggleMute },
       { id: 'speed', label: `倍速 ${rate}x`, run: cycleRate },
       { id: 'quality', label: '切换清晰度', run: cycleQuality },
-      { id: 'rotate', label: landscape ? '竖屏' : '横屏', run: () => void toggleLandscape() },
-      { id: 'close', label: '退出', run: closePlayer },
-    ],
-    [
-      closePlayer,
-      cycleQuality,
-      cycleRate,
-      episodeIndex,
-      landscape,
-      muted,
-      playEpisode,
-      playing,
-      rate,
-      seekBy,
-      seekStep,
-      toggleLandscape,
-      toggleMute,
-      togglePlay,
-    ],
-  )
+    ]
+    if (showLandscape) {
+      list.push({ id: 'rotate', label: landscape ? '竖屏' : '横屏', run: () => void toggleLandscape() })
+    } else {
+      list.push(
+        {
+          id: 'fullscreen',
+          label: fullscreen ? '退出全屏' : '全屏',
+          run: () => void toggleFullscreen(),
+        },
+        { id: 'fit', label: fit === 'cover' ? '适应' : '铺满', run: toggleFit },
+      )
+    }
+    list.push({ id: 'close', label: '退出', run: closePlayer })
+    return list
+  }, [
+    closePlayer,
+    cycleQuality,
+    cycleRate,
+    episodeIndex,
+    fit,
+    fullscreen,
+    landscape,
+    muted,
+    playEpisode,
+    playing,
+    rate,
+    seekBy,
+    seekStep,
+    showLandscape,
+    toggleFit,
+    toggleFullscreen,
+    toggleLandscape,
+    toggleMute,
+    togglePlay,
+  ])
+
+  const toolFocused = (id: string) =>
+    focusIndex === buttons.findIndex((button) => button.id === id)
 
   // 播放器专用按键：方向键调进度，上/下切换按钮，回车执行
   useEffect(() => {
@@ -484,7 +531,8 @@ export function Player({
         playEpisode(episodeIndex + 1)
       }
       if (key === 'f' || key === 'F') {
-        void toggleLandscape()
+        if (showLandscape) void toggleLandscape()
+        else void toggleFullscreen()
       }
       if (key === 'm' || key === 'M') {
         toggleMute()
@@ -503,6 +551,8 @@ export function Player({
     saveProgress,
     seekBy,
     seekStep,
+    showLandscape,
+    toggleFullscreen,
     toggleLandscape,
     toggleMute,
     togglePlay,
@@ -550,7 +600,7 @@ export function Player({
   const volumeValue = muted ? 0 : volume
 
   return (
-    <div className={`player ${forceRotate ? 'force-landscape' : ''}`}>
+    <div className={`player ${forceRotate ? 'force-landscape' : ''} ${fit === 'cover' ? 'fit-cover' : ''}`}>
       <video
         ref={videoRef}
         playsInline
@@ -699,7 +749,7 @@ export function Player({
             <div className="volume-control">
               <button
                 type="button"
-                className={`pbtn ${focusIndex === 4 ? 'is-focused' : ''}`}
+                className={`pbtn ${toolFocused('mute') ? 'is-focused' : ''}`}
                 onClick={toggleMute}
                 aria-label={muted ? '取消静音' : '静音'}
               >
@@ -723,7 +773,7 @@ export function Player({
 
             <button
               type="button"
-              className={`pbtn ${focusIndex === 5 ? 'is-focused' : ''}`}
+              className={`pbtn ${toolFocused('speed') ? 'is-focused' : ''}`}
               onClick={() => {
                 setMenu(menu === 'speed' ? null : 'speed')
                 reveal()
@@ -735,7 +785,7 @@ export function Player({
 
             <button
               type="button"
-              className={`pbtn ${focusIndex === 6 ? 'is-focused' : ''}`}
+              className={`pbtn ${toolFocused('quality') ? 'is-focused' : ''}`}
               disabled={!levels.length}
               onClick={() => {
                 setMenu(menu === 'quality' ? null : 'quality')
@@ -746,18 +796,39 @@ export function Player({
               {levels.length ? qualityLabel : '清晰度'}
             </button>
 
-            <button
-              type="button"
-              className={`pbtn ${focusIndex === 7 ? 'is-focused' : ''}`}
-              onClick={() => void toggleLandscape()}
-            >
-              <RotateIcon width={17} height={17} />
-              {landscape ? '竖屏' : '横屏'}
-            </button>
+            {showLandscape ? (
+              <button
+                type="button"
+                className={`pbtn ${toolFocused('rotate') ? 'is-focused' : ''}`}
+                onClick={() => void toggleLandscape()}
+              >
+                <RotateIcon width={17} height={17} />
+                {landscape ? '竖屏' : '横屏'}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`pbtn ${toolFocused('fullscreen') ? 'is-focused' : ''}`}
+                  onClick={() => void toggleFullscreen()}
+                >
+                  <FullscreenIcon width={17} height={17} />
+                  {fullscreen ? '退出全屏' : '全屏'}
+                </button>
+                <button
+                  type="button"
+                  className={`pbtn ${toolFocused('fit') ? 'is-focused' : ''}`}
+                  onClick={toggleFit}
+                >
+                  <FitIcon width={17} height={17} />
+                  {fit === 'cover' ? '适应' : '铺满'}
+                </button>
+              </>
+            )}
 
             <button
               type="button"
-              className={`pbtn ${focusIndex === 8 ? 'is-focused' : ''}`}
+              className={`pbtn ${toolFocused('close') ? 'is-focused' : ''}`}
               onClick={closePlayer}
             >
               <ChevronLeft width={17} height={17} />

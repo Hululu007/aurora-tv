@@ -222,6 +222,23 @@ export function RotateIcon(props: IconProps) {
   )
 }
 
+export function FullscreenIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </svg>
+  )
+}
+
+export function FitIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <path d="M8.5 12h7M8.5 12l2-2M8.5 12l2 2M15.5 12l-2-2M15.5 12l-2 2" />
+    </svg>
+  )
+}
+
 export function SparkIcon(props: IconProps) {
   return (
     <svg {...base} {...props} fill="currentColor" stroke="none">
