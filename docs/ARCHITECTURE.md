@@ -122,9 +122,26 @@ CMS 站点经常返回「网页播放地址」而不是直链。`resolveParseUrl
 
 | Key | 内容 |
 | --- | --- |
-| `aurora.settings.v1` | 全部设置 |
+| `aurora.settings.v1` | 全部设置（含同步配置与凭证） |
 | `aurora.history.v1` | 最近 60 条观看记录（含线路与进度） |
 | `aurora.lastSource` / `aurora.lastSite` | 上次成功的源与站点，加速启动 |
 | `aurora.cache.*` | 配置/源 JSON 缓存，3 小时 |
 
-同步码 = Base64(JSON{ settings, history, exportedAt })，见 `encodeSync/decodeSync`。
+同步码 = Base64(JSON{ settings(不含 sync), history, exportedAt })，见 `encodeSync/decodeSync`。
+
+## 播放记录同步
+
+`src/core/sync.ts` 只同步 `HistoryEntry[]`，不碰片源与外观：
+
+```
+本地 history ──┐
+               ├─ mergeHistory(updatedAt 新者胜) ── saveHistory ── push(SyncDoc)
+远端 SyncDoc ──┘
+```
+
+- **HTTP / 局域网**：`server/sync.mjs`，`GET/PUT /history?key=...`，可选 `SYNC_TOKEN`；
+- **WebDAV**：`PUT {dir}/aurora-tv-history.json`，Basic Auth；浏览器受 CORS 限制；
+- **Gist**：`GET/PATCH/POST https://api.github.com/gists`，Token 需 gist 权限。
+
+Tauri 端新增 `http_request` 命令（method / headers / body），浏览器端直接 `fetch`。
+触发时机：进度写入后 4 秒防抖、启动 2.5 秒、切回前台 60 秒节流；合并永远先拉后推。

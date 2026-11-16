@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   decodeSync,
   encodeSync,
+  stripSyncSecrets,
   type Settings,
   type SyncPayload,
 } from '../core/settings'
@@ -14,6 +15,13 @@ import { ChevronLeft, RefreshIcon } from '../components/Icons'
 interface SettingsViewProps {
   settings: Settings
   history: HistoryEntry[]
+  syncState: {
+    status: 'idle' | 'syncing' | 'ok' | 'error'
+    message?: string
+    at?: number
+    count?: number
+  }
+  onSyncNow: () => void
   onChange: (next: Settings) => void
   onClose: () => void
   onOpenSources: () => void
@@ -26,6 +34,8 @@ interface SettingsViewProps {
 export function SettingsView({
   settings,
   history,
+  syncState,
+  onSyncNow,
   onChange,
   onClose,
   onOpenSources,
@@ -63,12 +73,14 @@ export function SettingsView({
     onChange({ ...settings, play: { ...play, ...patch } })
   const updateData = (patch: Partial<Settings['data']>) =>
     onChange({ ...settings, data: { ...settings.data, ...patch } })
+  const updateSync = (patch: Partial<Settings['sync']>) =>
+    onChange({ ...settings, sync: { ...settings.sync, ...patch } })
 
   const makeCode = () => {
     const code = encodeSync({
       app: 'aurora-tv',
       version: 1,
-      settings,
+      settings: stripSyncSecrets(settings),
       history,
       exportedAt: Date.now(),
     })
@@ -87,6 +99,19 @@ export function SettingsView({
       setSyncError((error as Error).message || '同步码无法解析')
     }
   }
+
+  const syncStatusText =
+    settings.sync.provider === 'off'
+      ? '同步已关闭'
+      : syncState.status === 'syncing'
+        ? '正在同步…'
+        : syncState.status === 'error'
+          ? `同步失败：${syncState.message ?? '请检查配置'}`
+          : syncState.status === 'ok'
+            ? `上次同步 ${formatClock(syncState.at)} · ${syncState.count ?? history.length} 条`
+            : settings.sync.lastSyncAt
+              ? `上次同步 ${formatClock(settings.sync.lastSyncAt)}`
+              : '尚未同步'
 
   return (
     <div className="layer" data-layer="settings">
@@ -310,7 +335,152 @@ export function SettingsView({
           </div>
 
           <div className="group">
-            <div className="group-title">三端同步</div>
+            <div className="group-title">播放记录自动同步</div>
+
+            <Row label="同步方式" hint="只同步观看进度；片源、外观和账号不会同步">
+              <Seg
+                value={settings.sync.provider}
+                options={[
+                  { value: 'off', label: '关闭' },
+                  { value: 'http', label: '局域网' },
+                  { value: 'webdav', label: 'WebDAV' },
+                  { value: 'gist', label: 'Gist' },
+                ]}
+                onChange={(value) =>
+                  updateSync({ provider: value as Settings['sync']['provider'] })
+                }
+              />
+            </Row>
+
+            {settings.sync.provider === 'http' ? (
+              <>
+                <SyncField
+                  label="服务器地址"
+                  hint="在常开的电脑上运行 npm run sync，三端都填这台电脑的局域网地址"
+                >
+                  <input
+                    className="field"
+                    value={settings.sync.endpoint}
+                    onChange={(event) => updateSync({ endpoint: event.target.value })}
+                    placeholder="http://192.168.1.10:8788"
+                    spellCheck={false}
+                    inputMode="url"
+                  />
+                </SyncField>
+                <SyncField
+                  label="同步密钥"
+                  hint="服务端启动时设置了 SYNC_TOKEN 才需要；留空使用 default"
+                >
+                  <input
+                    className="field"
+                    type="password"
+                    value={settings.sync.password}
+                    onChange={(event) => updateSync({ password: event.target.value })}
+                    placeholder="可留空"
+                    autoComplete="off"
+                  />
+                </SyncField>
+              </>
+            ) : null}
+
+            {settings.sync.provider === 'webdav' ? (
+              <>
+                <SyncField
+                  label="WebDAV 目录"
+                  hint="例如坚果云 https://dav.jianguoyun.com/dav/AuroraTV/，会自动创建 aurora-tv-history.json"
+                >
+                  <input
+                    className="field"
+                    value={settings.sync.endpoint}
+                    onChange={(event) => updateSync({ endpoint: event.target.value })}
+                    placeholder="https://dav.example.com/dav/AuroraTV/"
+                    spellCheck={false}
+                    inputMode="url"
+                  />
+                </SyncField>
+                <SyncField label="用户名" hint="WebDAV 登录账号">
+                  <input
+                    className="field"
+                    value={settings.sync.username}
+                    onChange={(event) => updateSync({ username: event.target.value })}
+                    placeholder="账号"
+                    autoComplete="username"
+                  />
+                </SyncField>
+                <SyncField label="应用密码" hint="坚果云需要单独生成应用密码，不要用登录密码">
+                  <input
+                    className="field"
+                    type="password"
+                    value={settings.sync.password}
+                    onChange={(event) => updateSync({ password: event.target.value })}
+                    placeholder="应用密码"
+                    autoComplete="off"
+                  />
+                </SyncField>
+              </>
+            ) : null}
+
+            {settings.sync.provider === 'gist' ? (
+              <>
+                <SyncField
+                  label="GitHub Token"
+                  hint="在 GitHub → Settings → Developer settings → Personal access tokens 创建，勾选 gist"
+                >
+                  <input
+                    className="field"
+                    type="password"
+                    value={settings.sync.token}
+                    onChange={(event) => updateSync({ token: event.target.value })}
+                    placeholder="ghp_…"
+                    spellCheck={false}
+                    autoComplete="off"
+                  />
+                </SyncField>
+                <SyncField
+                  label="Gist ID"
+                  hint="留空会自动创建一个私密 Gist，并把 ID 回填到这里"
+                >
+                  <input
+                    className="field"
+                    value={settings.sync.gistId}
+                    onChange={(event) => updateSync({ gistId: event.target.value })}
+                    placeholder="自动创建"
+                    spellCheck={false}
+                  />
+                </SyncField>
+              </>
+            ) : null}
+
+            <Row label="自动同步" hint="进度变化 4 秒后上传；切回应用时自动拉取">
+              <Toggle
+                checked={settings.sync.auto}
+                onChange={(checked) => updateSync({ auto: checked })}
+              />
+            </Row>
+
+            <div className="sync-actions">
+              <button
+                type="button"
+                className="btn primary"
+                data-nav
+                disabled={settings.sync.provider === 'off'}
+                onClick={onSyncNow}
+              >
+                <RefreshIcon width={15} height={15} />
+                立即同步
+              </button>
+              <span className={`sync-status ${syncState.status === 'error' ? 'is-error' : ''}`}>
+                {syncStatusText}
+              </span>
+            </div>
+
+            <div className="hint" style={{ paddingBottom: 16 }}>
+              同步凭证只保存在本机，不会写进「同步码」。
+            </div>
+          </div>
+
+          <div className="group">
+            <div className="group-title">手动同步码</div>
             <div style={{ padding: '10px 0 16px' }}>
               <div className="hint" style={{ marginBottom: 10 }}>
                 在一台设备点「生成同步码」，把整段文字发到另一台设备粘贴后点「导入」，即可同步设置、片源与观看进度。
@@ -354,7 +524,7 @@ export function SettingsView({
 
           <div className="group">
             <div className="group-title">关于</div>
-            <Row label="Aurora TV" hint="0.1.2 · Tauri 2 + React · 手机 / Windows / Android TV">
+            <Row label="Aurora TV" hint="0.1.3 · Tauri 2 + React · 手机 / Windows / Android TV">
               <span className="tag">开源原型</span>
             </Row>
             <Row label="快捷键" hint="方向键移动 · 回车确认 · ESC 返回 · 空格播放/暂停">
@@ -388,6 +558,30 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       <div className="control">{children}</div>
     </div>
   )
+}
+
+function SyncField({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="sync-field">
+      <div className="label">{label}</div>
+      {hint ? <div className="hint">{hint}</div> : null}
+      {children}
+    </div>
+  )
+}
+
+function formatClock(timestamp?: number): string {
+  if (!timestamp) return '—'
+  const date = new Date(timestamp)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {

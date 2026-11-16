@@ -63,6 +63,64 @@ async function tauriFetch(url: string, referer?: string): Promise<string> {
   return String(text)
 }
 
+export interface HttpRequestInit {
+  method?: string
+  headers?: Record<string, string>
+  body?: string
+  timeout?: number
+}
+
+export interface HttpResult {
+  status: number
+  ok: boolean
+  text: string
+}
+
+/**
+ * 通用 HTTP 请求，供同步功能使用。
+ * Tauri 走 Rust 原生请求（无 CORS、可带任意 header / method）；
+ * 浏览器直接 fetch，WebDAV 之类不支持 CORS 的服务会失败。
+ */
+export async function httpRequest(url: string, init: HttpRequestInit = {}): Promise<HttpResult> {
+  const method = (init.method ?? 'GET').toUpperCase()
+
+  if (runtime.tauri) {
+    const internals = (
+      window as unknown as {
+        __TAURI_INTERNALS__: {
+          invoke: (cmd: string, args: Record<string, unknown>) => Promise<unknown>
+        }
+      }
+    ).__TAURI_INTERNALS__
+    const result = (await internals.invoke('http_request', {
+      method,
+      url,
+      headers: init.headers ?? {},
+      body: init.body ?? null,
+    })) as { status: number; body: string }
+    return {
+      status: result.status,
+      ok: result.status >= 200 && result.status < 300,
+      text: result.body,
+    }
+  }
+
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), init.timeout ?? 15000)
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: init.headers,
+      body: init.body,
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+    return { status: response.status, ok: response.ok, text: await response.text() }
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 export interface FetchOptions {
   timeout?: number
   referer?: string

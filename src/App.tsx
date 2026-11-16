@@ -6,11 +6,14 @@ import {
   loadHistory,
   loadSettings,
   merge,
+  saveHistory,
   saveSettings,
   type Settings,
   type SyncPayload,
+  type SyncSettings,
   upsertHistory,
 } from './core/settings'
+import { makeSyncDoc, mergeHistory, pullHistory, pushHistory } from './core/sync'
 import { setProxy } from './core/net'
 import {
   activate,
@@ -34,6 +37,13 @@ import { Search } from './views/Search'
 
 type Overlay = 'search' | 'settings' | 'sources' | null
 
+interface SyncState {
+  status: 'idle' | 'syncing' | 'ok' | 'error'
+  message?: string
+  at?: number
+  count?: number
+}
+
 const CACHE_PREFIX = 'aurora.cache.'
 
 export default function App() {
@@ -45,7 +55,13 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [barHidden, setBarHidden] = useState(false)
   const [ambient, setAmbient] = useState<[string, string, string]>(['#24344f', '#5b7fa6', '#0a0f18'])
+  const [syncState, setSyncState] = useState<SyncState>({ status: 'idle' })
   const toastTimer = useRef<number | null>(null)
+  const historyRef = useRef(history)
+  const syncCfgRef = useRef(settings.sync)
+  const syncingRef = useRef(false)
+  const syncTimer = useRef<number | null>(null)
+  const lastAutoSync = useRef(0)
   const catalog = useCatalog(settings)
 
   /* ---------------------------------- 设置持久化 --------------------------------- */
@@ -63,6 +79,107 @@ export default function App() {
     if (toastTimer.current) window.clearTimeout(toastTimer.current)
     toastTimer.current = window.setTimeout(() => setToast(null), 2600)
   }, [])
+
+  /* --------------------------------- 播放记录同步 -------------------------------- */
+
+  useEffect(() => {
+    syncCfgRef.current = settings.sync
+  }, [settings.sync])
+
+  const updateSyncSettings = useCallback((patch: Partial<SyncSettings>) => {
+    setSettings((current) => {
+      const next = { ...current, sync: { ...current.sync, ...patch } }
+      syncCfgRef.current = next.sync
+      return next
+    })
+  }, [])
+
+  const runSync = useCallback(
+    async (manual: boolean) => {
+      const cfg = syncCfgRef.current
+      if (cfg.provider === 'off') {
+        if (manual) showToast('请先在「设置 → 播放记录同步」里开启同步')
+        return
+      }
+      if (syncingRef.current) {
+        if (manual) showToast('正在同步，请稍候…')
+        return
+      }
+
+      syncingRef.current = true
+      setSyncState({ status: 'syncing' })
+
+      try {
+        const pulled = await pullHistory(cfg)
+        let nextCfg = cfg
+
+        if (pulled.gistId && pulled.gistId !== cfg.gistId) {
+          nextCfg = { ...nextCfg, gistId: pulled.gistId }
+          updateSyncSettings({ gistId: pulled.gistId })
+        }
+
+        const merged = mergeHistory(historyRef.current, pulled.doc?.history ?? [])
+        historyRef.current = merged
+        saveHistory(merged)
+        setHistory(merged)
+
+        const pushed = await pushHistory(nextCfg, makeSyncDoc(merged, nextCfg.deviceId))
+        if (pushed.gistId && pushed.gistId !== nextCfg.gistId) {
+          nextCfg = { ...nextCfg, gistId: pushed.gistId }
+          updateSyncSettings({ gistId: pushed.gistId })
+        }
+
+        const at = Date.now()
+        lastAutoSync.current = at
+        updateSyncSettings({ lastSyncAt: at })
+        setSyncState({ status: 'ok', at, count: merged.length })
+        if (manual) showToast(`同步完成，共 ${merged.length} 条播放记录`)
+      } catch (error) {
+        const message = (error as Error)?.message || '同步失败'
+        setSyncState({ status: 'error', message })
+        if (manual) showToast(message)
+      } finally {
+        syncingRef.current = false
+      }
+    },
+    [showToast, updateSyncSettings],
+  )
+
+  const scheduleSync = useCallback(() => {
+    const cfg = syncCfgRef.current
+    if (cfg.provider === 'off' || !cfg.auto) return
+    if (syncTimer.current) window.clearTimeout(syncTimer.current)
+    syncTimer.current = window.setTimeout(() => {
+      void runSync(false)
+    }, 4000)
+  }, [runSync])
+
+  // 启动 / 配置变化后自动拉取一次
+  useEffect(() => {
+    if (settings.sync.provider === 'off' || !settings.sync.auto) return
+    const timer = window.setTimeout(() => {
+      void runSync(false)
+    }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [settings.sync.provider, settings.sync.auto, settings.sync.endpoint, settings.sync.gistId, runSync])
+
+  // 从后台切回 / 重新聚焦时同步，60 秒节流
+  useEffect(() => {
+    const maybeSync = () => {
+      if (document.visibilityState !== 'visible') return
+      const cfg = syncCfgRef.current
+      if (cfg.provider === 'off' || !cfg.auto) return
+      if (Date.now() - lastAutoSync.current < 60_000) return
+      lastAutoSync.current = Date.now()
+      void runSync(false)
+    }
+    document.addEventListener('visibilitychange', maybeSync)
+    window.addEventListener('focus', maybeSync)
+    return () => {
+      document.removeEventListener('visibilitychange', maybeSync)
+      window.removeEventListener('focus', maybeSync)
+    }
+  }, [runSync])
 
   /* ----------------------------------- 顶栏 ----------------------------------- */
 
@@ -295,23 +412,24 @@ export default function App() {
   const handleProgress = useCallback(
     (payload: { groupIndex: number; episodeIndex: number; position: number; duration: number }) => {
       if (!playback) return
-      setHistory(
-        upsertHistory({
-          mediaKey: playback.mediaKey,
-          title: playback.title,
-          subtitle: playback.subtitle,
-          poster: playback.poster,
-          palette: playback.palette,
-          groupIndex: payload.groupIndex,
-          episodeIndex: payload.episodeIndex,
-          position: payload.position,
-          duration: payload.duration,
-          updatedAt: Date.now(),
-          groups: playback.groups,
-        }),
-      )
+      const next = upsertHistory({
+        mediaKey: playback.mediaKey,
+        title: playback.title,
+        subtitle: playback.subtitle,
+        poster: playback.poster,
+        palette: playback.palette,
+        groupIndex: payload.groupIndex,
+        episodeIndex: payload.episodeIndex,
+        position: payload.position,
+        duration: payload.duration,
+        updatedAt: Date.now(),
+        groups: playback.groups,
+      })
+      historyRef.current = next
+      setHistory(next)
+      scheduleSync()
     },
-    [playback],
+    [playback, scheduleSync],
   )
 
   /* ---------------------------------- 数据同步 --------------------------------- */
@@ -335,6 +453,7 @@ export default function App() {
       if (payload.history?.length) {
         let next = loadHistory()
         for (const entry of payload.history) next = upsertHistory(entry)
+        historyRef.current = next
         setHistory(next)
       }
     },
@@ -450,6 +569,8 @@ export default function App() {
         <SettingsView
           settings={settings}
           history={history}
+          syncState={syncState}
+          onSyncNow={() => void runSync(true)}
           onChange={setSettings}
           onClose={() => setOverlay(null)}
           onOpenSources={() => setOverlay('sources')}

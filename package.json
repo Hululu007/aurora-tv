@@ -1,7 +1,7 @@
 {
   "name": "aurora-tv",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Aurora TV — 苹果 TV 风格的跨端 TVBox 客户端（Android / Windows / Android TV）",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build --configLoader runner",
     "preview": "vite preview --configLoader runner --host 127.0.0.1 --port 4173",
     "proxy": "node server/proxy.mjs",
+    "sync": "node server/sync.mjs",
     "start": "node scripts/dev.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",

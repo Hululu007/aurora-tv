@@ -57,7 +57,8 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 - **解析线路**：CMS 返回网页播放地址时，自动调用配置里的 `parses` 解析成 m3u8 直链（最多 5 条、9 秒超时）；
 - 「继续观看」行、播放进度写入本地；
 - 设置面板 20+ 项可调，实时生效并持久化；
-- **同步码**：把设置 + 片源 + 观看进度打包成一段文本，在另一台设备导入，完成三端互通；
+- **三端播放记录自动同步**：局域网 / WebDAV / GitHub Gist 三种方式，观看进度自动合并；
+- **手动同步码**：把设置 + 片源 + 观看进度打包成一段文本，离线也能搬到另一台设备；
 - Windows / Android 使用 Tauri 原生 `fetch`，**不依赖浏览器代理、不受 CORS 限制**。
 
 ## 重要边界（先读）
@@ -85,9 +86,9 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 | 平台 | 文件 |
 | --- | --- |
-| Windows | `AuroraTV_0.1.2_x64-setup.exe` / `.msi` |
-| Android / TV（64 位） | `AuroraTV_0.1.2_arm64-v8a.apk` |
-| Android / TV（32 位旧盒子） | `AuroraTV_0.1.2_armeabi-v7a.apk` |
+| Windows | `AuroraTV_0.1.3_x64-setup.exe` / `.msi` |
+| Android / TV（64 位） | `AuroraTV_0.1.3_arm64-v8a.apk` |
+| Android / TV（32 位旧盒子） | `AuroraTV_0.1.3_armeabi-v7a.apk` |
 
 APK 已用项目自带 keystore 做 release 签名，可直接安装；电视端已带 Leanback 入口与横屏。
 
@@ -179,9 +180,34 @@ npx tauri android build --apk
 
 想改得更深：所有设计变量集中在 `src/styles.css` 顶部的 `:root`（`--accent`、`--radius`、`--card-w`、`--ease` 等），布局调整看 `src/views/Home.tsx` 与 `src/components/Shelf.tsx`。
 
-## 三端互通（同步码）
+## 三端播放记录同步
 
-设置 → 三端同步 → **生成同步码**，把整段 Base64 文本发到另一台设备，粘贴后 **导入**。
+手机、Windows、Android TV 共用一份「继续观看」。设置 → **播放记录自动同步**，选一种方式，三端填同一套配置即可：
+
+| 方式 | 适合 | 需要 |
+| --- | --- | --- |
+| 局域网 | 家里三端连同一个 Wi-Fi | 电脑跑 `npm run sync`，填 `http://电脑IP:8788` |
+| WebDAV | 随时随地 | 坚果云 / Nextcloud 的一个目录 + 应用密码 |
+| Gist | 有 GitHub | Token（勾选 gist），首次自动创建私密 Gist |
+
+![同步设置](docs/screenshots/sync.png)
+
+- 只同步观看进度，不同步片源 / 外观 / 账号；
+- 进度变化 **4 秒后**自动上传，启动和切回应用时自动拉取，也可以手动「立即同步」；
+- 冲突按 `updatedAt` 取最新，时间相同取进度更靠后的；只合并、不删除；
+- 同步凭证只保存在本机，不会写进下面的同步码。
+
+局域网方式最快：
+
+```bash
+npm run sync        # http://0.0.0.0:8788，数据在 .sync-data/
+```
+
+完整配置（坚果云应用密码、Gist Token、鉴权、冲突规则、接口）见 **[docs/SYNC.md](docs/SYNC.md)**。
+
+## 手动同步码（离线）
+
+设置 → 手动同步码 → **生成同步码**，把整段 Base64 文本发到另一台设备，粘贴后 **导入**。
 同步内容包括：
 
 - 全部外观/布局/播放设置
@@ -189,7 +215,7 @@ npx tauri android build --apk
 - 最近 60 条观看记录（含线路、集数、进度）
 
 数据存储：浏览器 `localStorage`，Tauri 使用 WebView 的持久化存储，卸载应用才会清空。
-后续可替换为 WebDAV / 自建同步服务（`SyncPayload` 结构已独立，见 `src/core/settings.ts`）。
+同步码不包含任何 WebDAV / Gist / 局域网密码。
 
 ## 目录结构
 
@@ -201,6 +227,7 @@ aurora-tv/
 │  ├─ core/
 │  │  ├─ types.ts             # TVBox / 影片 / 播放模型
 │  │  ├─ settings.ts          # 设置、历史、同步码
+│  │  ├─ sync.ts              # 播放记录同步（HTTP / WebDAV / Gist + 合并）
 │  │  ├─ net.ts               # 代理 / Tauri 原生 fetch、容错 JSON
 │  │  ├─ tvbox.ts             # 多源配置、CMS 列表/详情/搜索、线路解析
 │  │  ├─ nav.ts               # 空间焦点导航（方向键 / 手柄）
@@ -209,14 +236,16 @@ aurora-tv/
 │  ├─ components/             # Hero、Shelf、Card、Artwork、TopBar、图标
 │  └─ views/                  # Home、Detail、Player、Search、Settings、Sources
 ├─ server/proxy.mjs           # 浏览器开发代理（/proxy、/img、/health）
+├─ server/sync.mjs            # 局域网播放记录同步服务（:8788）
 ├─ src-tauri/                 # Tauri 2 壳 + Rust 原生 fetch
-│  ├─ src/lib.rs              # #[tauri::command] fetch_text
+│  ├─ src/lib.rs              # #[tauri::command] fetch_text / http_request
 │  ├─ tauri.conf.json
 │  └─ capabilities/default.json
 ├─ tools/make-icons.py        # 生成 PNG / ICO 图标
 ├─ docs/
 │  ├─ ARCHITECTURE.md
 │  ├─ BUILD.md
+│  ├─ SYNC.md
 │  └─ screenshots/
 └─ index.html / vite.config.mjs
 ```
@@ -244,7 +273,7 @@ aurora-tv/
 - [ ] 直播（`lives`）与 EPG
 - [ ] 海报墙「全部」页、分类筛选
 - [ ] 播放器手势（手机）、画中画、后台音频
-- [ ] WebDAV / 自建服务同步，二维码配对
+- [ ] 同步二维码配对（免手输地址/Token）
 - [ ] 真正的电视遥控按键映射（`KeyEvent.KEYCODE_DPAD_*`）与开机横屏
 - [ ] 豆瓣/ TMDB 元数据补全
 

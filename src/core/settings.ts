@@ -1,5 +1,24 @@
 import type { HistoryEntry } from './types'
 
+export type SyncProvider = 'off' | 'http' | 'webdav' | 'gist'
+
+export interface SyncSettings {
+  provider: SyncProvider
+  /** 局域网 / WebDAV 的地址；Gist 不需要 */
+  endpoint: string
+  /** WebDAV 用户名；HTTP 模式不用 */
+  username: string
+  /** WebDAV 密码 / HTTP 同步密钥 */
+  password: string
+  /** GitHub Token（Gist） */
+  token: string
+  /** 已有 Gist ID，留空首次同步会自动创建 */
+  gistId: string
+  auto: boolean
+  lastSyncAt: number
+  deviceId: string
+}
+
 export interface Settings {
   theme: {
     accent: string
@@ -31,6 +50,7 @@ export interface Settings {
     autoNext: boolean
     seekStep: number
   }
+  sync: SyncSettings
 }
 
 export const ACCENTS: { name: string; value: string }[] = [
@@ -74,6 +94,17 @@ export const DEFAULT_SETTINGS: Settings = {
     autoNext: true,
     seekStep: 10,
   },
+  sync: {
+    provider: 'off',
+    endpoint: '',
+    username: '',
+    password: '',
+    token: '',
+    gistId: '',
+    auto: true,
+    lastSyncAt: 0,
+    deviceId: '',
+  },
 }
 
 const SETTINGS_KEY = 'aurora.settings.v1'
@@ -103,11 +134,27 @@ export function merge<T>(base: T, patch: unknown): T {
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
-    if (!raw) return structuredClone(DEFAULT_SETTINGS)
-    return merge(structuredClone(DEFAULT_SETTINGS), JSON.parse(raw))
+    if (!raw) return withDeviceId(structuredClone(DEFAULT_SETTINGS))
+    const merged = merge(structuredClone(DEFAULT_SETTINGS), JSON.parse(raw))
+    return withDeviceId(merged)
   } catch {
-    return structuredClone(DEFAULT_SETTINGS)
+    return withDeviceId(structuredClone(DEFAULT_SETTINGS))
   }
+}
+
+function withDeviceId(settings: Settings): Settings {
+  if (settings.sync.deviceId) return settings
+  const id =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `device-${Date.now().toString(36)}`
+  return { ...settings, sync: { ...settings.sync, deviceId: id } }
+}
+
+/** 导出同步码时不要把同步凭证带出去（连 sync 整段都省略，导入时不会覆盖本机同步配置） */
+export function stripSyncSecrets(settings: Settings): Settings {
+  const { sync: _sync, ...rest } = settings
+  return rest as Settings
 }
 
 export function saveSettings(settings: Settings) {
