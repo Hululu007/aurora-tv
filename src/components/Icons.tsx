@@ -77,6 +77,17 @@ export function HomeIcon(props: IconProps) {
   )
 }
 
+export function GridIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="4" width="6.6" height="6.6" rx="1.4" />
+      <rect x="13.4" y="4" width="6.6" height="6.6" rx="1.4" />
+      <rect x="4" y="13.4" width="6.6" height="6.6" rx="1.4" />
+      <rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.4" />
+    </svg>
+  )
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

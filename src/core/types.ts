@@ -120,7 +120,7 @@ export interface Row {
   items: CatalogItem[]
 }
 
-export type View = 'home' | 'search' | 'settings'
+export type View = 'home' | 'category' | 'search' | 'settings'
 
 export interface Site {
   key: string

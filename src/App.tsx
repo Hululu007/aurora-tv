@@ -34,6 +34,8 @@ import { Player } from './views/Player'
 import { SettingsView } from './views/Settings'
 import { Sources } from './views/Sources'
 import { Search } from './views/Search'
+import { CategoryView } from './views/CategoryView'
+import { bindEdgeSwipe } from './core/gestures'
 
 type Overlay = 'search' | 'settings' | 'sources' | null
 
@@ -48,6 +50,7 @@ const CACHE_PREFIX = 'aurora.cache.'
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
+  const [page, setPage] = useState<'home' | 'category'>('home')
   const [overlay, setOverlay] = useState<Overlay>(null)
   const [detail, setDetail] = useState<CatalogItem | null>(null)
   const [playback, setPlayback] = useState<PlaybackState | null>(null)
@@ -221,8 +224,13 @@ export default function App() {
       setPlayback(null)
       return
     }
+    if (page === 'category') {
+      setPage('home')
+      window.scrollTo({ top: 0 })
+      return
+    }
     if (window.scrollY > 40) window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [detail, overlay, playback])
+  }, [detail, overlay, page, playback])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -268,6 +276,18 @@ export default function App() {
       stopGamepad()
     }
   }, [closeTop])
+
+  useEffect(() => {
+    const onBackGesture = () => {
+      if (playback) {
+        setNavLock(false)
+        setPlayback(null)
+        return
+      }
+      closeTop()
+    }
+    return bindEdgeSwipe(onBackGesture, isPhoneUi)
+  }, [closeTop, playback])
 
   /* --------------------------------- 焦点复位 --------------------------------- */
 
@@ -483,13 +503,21 @@ export default function App() {
   }, [ambient, settings.theme])
 
   const activeView: View =
-    overlay === 'settings' ? 'settings' : overlay === 'search' ? 'search' : 'home'
+    overlay === 'settings' ? 'settings' : overlay === 'search' ? 'search' : page
 
   const navigate = (view: View) => {
     if (view === 'home') {
+      setPage('home')
       setOverlay(null)
       setDetail(null)
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    if (view === 'category') {
+      setPage('category')
+      setOverlay(null)
+      setDetail(null)
+      window.scrollTo({ top: 0 })
       return
     }
     setDetail(null)
@@ -525,22 +553,31 @@ export default function App() {
       />
 
       <main className="stage">
-        <HomeView
-          hero={catalog.hero}
-          rows={rows}
-          loading={catalog.phase === 'loading' && !catalog.rows.length}
-          error={catalog.error}
-          demo={catalog.demo}
-          showHero={settings.layout.hero}
-          rotate={settings.layout.rotate}
-          onOpen={handleOpen}
-          onPlay={handlePlay}
-          onTint={setAmbient}
-          onRetry={catalog.reload}
-          onDemo={catalog.enableDemo}
-          onOpenSettings={() => setOverlay('settings')}
-          progressOf={progressOf}
-        />
+        {page === 'category' ? (
+          <CategoryView
+            site={catalog.site}
+            demo={catalog.demo}
+            onOpen={handleOpen}
+            onOpenSources={() => setOverlay('sources')}
+          />
+        ) : (
+          <HomeView
+            hero={catalog.hero}
+            rows={rows}
+            loading={catalog.phase === 'loading' && !catalog.rows.length}
+            error={catalog.error}
+            demo={catalog.demo}
+            showHero={settings.layout.hero}
+            rotate={settings.layout.rotate}
+            onOpen={handleOpen}
+            onPlay={handlePlay}
+            onTint={setAmbient}
+            onRetry={catalog.reload}
+            onDemo={catalog.enableDemo}
+            onOpenSettings={() => setOverlay('settings')}
+            progressOf={progressOf}
+          />
+        )}
       </main>
 
       {detail ? (
@@ -629,7 +666,7 @@ export default function App() {
 
       {!overlay && !detail && !playback ? (
         <MobileTabBar
-          active="home"
+          active={page}
           onNavigate={navigate}
           onOpenSources={() => setOverlay('sources')}
         />

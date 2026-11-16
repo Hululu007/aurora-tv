@@ -1,14 +1,15 @@
 import type { View } from '../core/types'
-import { HomeIcon, LibraryIcon, SearchIcon, SettingsIcon } from './Icons'
+import { GridIcon, HomeIcon, LibraryIcon, SearchIcon, SettingsIcon } from './Icons'
 
 interface MobileTabBarProps {
-  active: 'home' | 'search' | 'settings' | 'sources'
+  active: 'home' | 'category' | 'search' | 'settings' | 'sources'
   onNavigate: (view: View) => void
   onOpenSources: () => void
 }
 
 const TABS = [
   { id: 'home', label: '首页', icon: HomeIcon },
+  { id: 'category', label: '分类', icon: GridIcon },
   { id: 'search', label: '搜索', icon: SearchIcon },
   { id: 'sources', label: '片库', icon: LibraryIcon },
   { id: 'settings', label: '设置', icon: SettingsIcon },
