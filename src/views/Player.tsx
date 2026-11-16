@@ -388,15 +388,56 @@ export function Player({
     reveal()
   }, [autoNext, episodeIndex, group, groupIndex, reveal, state.groups.length])
 
+  const cycleRate = useCallback(() => {
+    const index = RATES.indexOf(rate)
+    setRate(RATES[(index + 1) % RATES.length])
+    reveal()
+  }, [rate, reveal])
+
+  const cycleQuality = useCallback(() => {
+    if (!levels.length) {
+      setNotice('当前线路只有单码率')
+      return
+    }
+    const index = levels.findIndex((item) => item.index === level)
+    const next =
+      level === -1
+        ? levels[0].index
+        : index >= 0 && index < levels.length - 1
+          ? levels[index + 1].index
+          : -1
+    setLevel(next)
+    reveal()
+  }, [level, levels, reveal])
+
   const buttons = useMemo(
     () => [
       { id: 'play', label: playing ? '暂停' : '播放', run: togglePlay },
       { id: 'back', label: '-10 秒', run: () => seekBy(-seekStep) },
       { id: 'forward', label: '+10 秒', run: () => seekBy(seekStep) },
       { id: 'next', label: '下一集', run: () => playEpisode(episodeIndex + 1) },
+      { id: 'mute', label: muted ? '取消静音' : '静音', run: toggleMute },
+      { id: 'speed', label: `倍速 ${rate}x`, run: cycleRate },
+      { id: 'quality', label: '切换清晰度', run: cycleQuality },
+      { id: 'rotate', label: landscape ? '竖屏' : '横屏', run: () => void toggleLandscape() },
       { id: 'close', label: '退出', run: closePlayer },
     ],
-    [closePlayer, episodeIndex, playEpisode, playing, seekBy, seekStep, togglePlay],
+    [
+      closePlayer,
+      cycleQuality,
+      cycleRate,
+      episodeIndex,
+      landscape,
+      muted,
+      playEpisode,
+      playing,
+      rate,
+      seekBy,
+      seekStep,
+      toggleLandscape,
+      toggleMute,
+      togglePlay,
+    ],
   )
 
   // 播放器专用按键：方向键调进度，上/下切换按钮，回车执行
@@ -656,7 +697,12 @@ export function Player({
 
           <div className="player-tools">
             <div className="volume-control">
-              <button type="button" className="pbtn" onClick={toggleMute} aria-label={muted ? '取消静音' : '静音'}>
+              <button
+                type="button"
+                className={`pbtn ${focusIndex === 4 ? 'is-focused' : ''}`}
+                onClick={toggleMute}
+                aria-label={muted ? '取消静音' : '静音'}
+              >
                 {muted || volume === 0 ? (
                   <VolumeMuteIcon width={18} height={18} />
                 ) : (
@@ -677,7 +723,7 @@ export function Player({
 
             <button
               type="button"
-              className="pbtn"
+              className={`pbtn ${focusIndex === 5 ? 'is-focused' : ''}`}
               onClick={() => {
                 setMenu(menu === 'speed' ? null : 'speed')
                 reveal()
@@ -689,7 +735,7 @@ export function Player({
 
             <button
               type="button"
-              className="pbtn"
+              className={`pbtn ${focusIndex === 6 ? 'is-focused' : ''}`}
               disabled={!levels.length}
               onClick={() => {
                 setMenu(menu === 'quality' ? null : 'quality')
@@ -700,12 +746,20 @@ export function Player({
               {levels.length ? qualityLabel : '清晰度'}
             </button>
 
-            <button type="button" className="pbtn" onClick={() => void toggleLandscape()}>
+            <button
+              type="button"
+              className={`pbtn ${focusIndex === 7 ? 'is-focused' : ''}`}
+              onClick={() => void toggleLandscape()}
+            >
               <RotateIcon width={17} height={17} />
               {landscape ? '竖屏' : '横屏'}
             </button>
 
-            <button type="button" className="pbtn" onClick={closePlayer}>
+            <button
+              type="button"
+              className={`pbtn ${focusIndex === 8 ? 'is-focused' : ''}`}
+              onClick={closePlayer}
+            >
               <ChevronLeft width={17} height={17} />
               返回
             </button>
