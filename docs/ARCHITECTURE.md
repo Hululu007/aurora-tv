@@ -86,6 +86,13 @@ Rust 内嵌 QuickJS（`rquickjs`）加载 `drpy2.min.js` 或 jar 对应的 JS �
 `homeContent / categoryContent / detailContent / searchContent / playerContent` 五个方法，返回同样的
 `Vod` JSON。前端只需把 `loadGroups()`/`buildRows()` 的分支从「HTTP CMS」切到「spider 调用」，UI 与数据模型不变。
 
+## 内置片源
+
+`src/core/builtin.ts` 固定了 5 个 CMS 站点（电影天堂 / 非凡 / 光速 / 量子 / 素博）。
+`useCatalog.boot()` 会把它们和配置源合并，并给 `sourceIndex = -1` 的站点更高优先级；
+聚合源里接口相同的条目会被 `withBuiltinSites()` 去重。配置完全加载失败时仍然会先探测内置站点，
+全部失败才进入演示片库。
+
 ## 解析线路（parses）
 
 CMS 站点经常返回「网页播放地址」而不是直链。`resolveParseUrl()`（`src/core/tvbox.ts`）会：
