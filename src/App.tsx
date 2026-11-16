@@ -16,6 +16,7 @@ import {
   activate,
   focusFirst,
   getNavLock,
+  isPhoneUi,
   moveFocus,
   setNavLock,
   startGamepadLoop,
@@ -71,7 +72,7 @@ export default function App() {
       return
     }
     // 手机端顶栏保持简洁常驻，避免滚动时状态与片源入口一起消失
-    if (window.matchMedia('(hover: none)').matches) {
+    if (isPhoneUi()) {
       setBarHidden(false)
       return
     }
@@ -155,7 +156,7 @@ export default function App() {
 
   useEffect(() => {
     if (catalog.phase !== 'ready' || overlay || detail || playback) return
-    if (window.matchMedia('(hover: none)').matches) return
+    if (isPhoneUi()) return
     const timer = window.setTimeout(() => {
       focusFirst()
     }, 650)
@@ -164,7 +165,7 @@ export default function App() {
 
   useEffect(() => {
     if (overlay || detail || playback) return
-    if (window.matchMedia('(hover: none)').matches) return
+    if (isPhoneUi()) return
     const timer = window.setTimeout(() => focusFirst(), 120)
     return () => window.clearTimeout(timer)
   }, [overlay, detail, playback])

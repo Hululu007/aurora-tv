@@ -8,7 +8,7 @@ import {
   type Settings,
   type SyncPayload,
 } from '../core/settings'
-import { focusFirst, setNavRoot } from '../core/nav'
+import { focusFirst, isPhoneUi, setNavRoot } from '../core/nav'
 import { ChevronLeft, RefreshIcon } from '../components/Icons'
 
 interface SettingsViewProps {
@@ -42,7 +42,7 @@ export function SettingsView({
 
   useEffect(() => {
     setNavRoot(rootRef.current)
-    const raf = window.matchMedia('(hover: none)').matches
+    const raf = isPhoneUi()
       ? 0
       : requestAnimationFrame(() => focusFirst())
     return () => {
@@ -354,7 +354,7 @@ export function SettingsView({
 
           <div className="group">
             <div className="group-title">关于</div>
-            <Row label="Aurora TV" hint="0.1.1 · Tauri 2 + React · 手机 / Windows / Android TV">
+            <Row label="Aurora TV" hint="0.1.2 · Tauri 2 + React · 手机 / Windows / Android TV">
               <span className="tag">开源原型</span>
             </Row>
             <Row label="快捷键" hint="方向键移动 · 回车确认 · ESC 返回 · 空格播放/暂停">

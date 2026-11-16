@@ -23,6 +23,16 @@ export function getNavLock() {
   return locked
 }
 
+/**
+ * 是否按“手机”处理触屏交互。
+ * 只看宽度，不看 hover：Android TV 也没有 hover，但它是 1080p/4K，
+ * 不能因为 hover:none 就把电视的初始焦点也关掉。
+ */
+export function isPhoneUi(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 720px)').matches
+}
+
 function scope(): ParentNode {
   return root ?? document
 }
@@ -85,8 +95,8 @@ export function focusElement(el: HTMLElement | null, options: { scroll?: boolean
 
 export function focusByHover(el: HTMLElement) {
   if (locked) return
-  // 触屏设备没有 hover，别让合成出来的 pointerenter 抢焦点
-  if (window.matchMedia('(hover: none)').matches) return
+  // 手机上没有 hover，别让合成出来的 pointerenter 抢焦点
+  if (isPhoneUi()) return
   focusElement(el, { scroll: false })
 }
 

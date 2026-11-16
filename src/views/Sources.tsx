@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MultiUrl, Site } from '../core/types'
-import { focusFirst, setNavRoot } from '../core/nav'
+import { focusFirst, isPhoneUi, setNavRoot } from '../core/nav'
 import { ChevronLeft, RefreshIcon } from '../components/Icons'
 
 interface SourcesProps {
@@ -50,7 +50,7 @@ export function Sources({
 
   useEffect(() => {
     setNavRoot(rootRef.current)
-    const raf = window.matchMedia('(hover: none)').matches
+    const raf = isPhoneUi()
       ? 0
       : requestAnimationFrame(() => focusFirst())
     return () => {

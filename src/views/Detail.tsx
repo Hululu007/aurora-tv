@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CatalogItem, HistoryEntry, PlayGroup } from '../core/types'
 import { Artwork, tintStyle } from '../components/Artwork'
 import { Back10Icon, ChevronLeft, PlayIcon } from '../components/Icons'
-import { focusFirst, setNavRoot } from '../core/nav'
+import { focusFirst, isPhoneUi, setNavRoot } from '../core/nav'
 import { paletteFromString } from '../core/format'
 
 interface DetailProps {
@@ -24,7 +24,7 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
   useEffect(() => {
     setNavRoot(rootRef.current)
     rootRef.current?.scrollTo({ top: 0 })
-    const raf = window.matchMedia('(hover: none)').matches
+    const raf = isPhoneUi()
       ? 0
       : requestAnimationFrame(() => focusFirst())
     return () => {
@@ -65,7 +65,7 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
   useEffect(() => {
     if (!groups?.length || focusOnce.current) return
     focusOnce.current = true
-    if (window.matchMedia('(hover: none)').matches) return
+    if (isPhoneUi()) return
     const raf = requestAnimationFrame(() => focusFirst())
     return () => cancelAnimationFrame(raf)
   }, [groups])

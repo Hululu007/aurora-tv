@@ -85,9 +85,9 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 | 平台 | 文件 |
 | --- | --- |
-| Windows | `AuroraTV_0.1.1_x64-setup.exe` / `.msi` |
-| Android / TV（64 位） | `AuroraTV_0.1.1_arm64-v8a.apk` |
-| Android / TV（32 位旧盒子） | `AuroraTV_0.1.1_armeabi-v7a.apk` |
+| Windows | `AuroraTV_0.1.2_x64-setup.exe` / `.msi` |
+| Android / TV（64 位） | `AuroraTV_0.1.2_arm64-v8a.apk` |
+| Android / TV（32 位旧盒子） | `AuroraTV_0.1.2_armeabi-v7a.apk` |
 
 APK 已用项目自带 keystore 做 release 签名，可直接安装；电视端已带 Leanback 入口与横屏。
 
