@@ -50,10 +50,12 @@ export function Sources({
 
   useEffect(() => {
     setNavRoot(rootRef.current)
-    const raf = requestAnimationFrame(() => focusFirst())
+    const raf = window.matchMedia('(hover: none)').matches
+      ? 0
+      : requestAnimationFrame(() => focusFirst())
     return () => {
       setNavRoot(null)
-      cancelAnimationFrame(raf)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [])
 

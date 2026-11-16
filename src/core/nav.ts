@@ -85,6 +85,8 @@ export function focusElement(el: HTMLElement | null, options: { scroll?: boolean
 
 export function focusByHover(el: HTMLElement) {
   if (locked) return
+  // 触屏设备没有 hover，别让合成出来的 pointerenter 抢焦点
+  if (window.matchMedia('(hover: none)').matches) return
   focusElement(el, { scroll: false })
 }
 

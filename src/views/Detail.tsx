@@ -24,10 +24,12 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
   useEffect(() => {
     setNavRoot(rootRef.current)
     rootRef.current?.scrollTo({ top: 0 })
-    const raf = requestAnimationFrame(() => focusFirst())
+    const raf = window.matchMedia('(hover: none)').matches
+      ? 0
+      : requestAnimationFrame(() => focusFirst())
     return () => {
       setNavRoot(null)
-      cancelAnimationFrame(raf)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [])
 
@@ -59,10 +61,11 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
 
   const palette = item.palette ?? paletteFromString(item.name)
 
-  // 线路加载完成后，把焦点落到主按钮上
+  // 线路加载完成后，把焦点落到主按钮上（触屏不需要焦点环）
   useEffect(() => {
     if (!groups?.length || focusOnce.current) return
     focusOnce.current = true
+    if (window.matchMedia('(hover: none)').matches) return
     const raf = requestAnimationFrame(() => focusFirst())
     return () => cancelAnimationFrame(raf)
   }, [groups])
@@ -80,17 +83,17 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
 
   return (
     <div className="layer" data-layer="detail">
+      <div className="detail-scrim" aria-hidden />
+      <button
+        type="button"
+        className="detail-back btn ghost"
+        data-nav
+        onClick={onClose}
+      >
+        <ChevronLeft width={16} height={16} />
+        返回
+      </button>
       <div className="detail" ref={rootRef}>
-        <button
-          type="button"
-          className="btn ghost"
-          data-nav
-          style={{ position: 'fixed', top: 22, left: 'var(--detail-x)', zIndex: 4 }}
-          onClick={onClose}
-        >
-          <ChevronLeft width={16} height={16} />
-          返回
-        </button>
 
         <header className="detail-hero">
           <div className="detail-bg" style={tintStyle(palette)}>
@@ -132,11 +135,9 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
               </button>
             </div>
           </div>
-          {item.poster ? (
-            <div className="detail-poster">
-              <Artwork item={item} />
-            </div>
-          ) : null}
+          <div className="detail-poster">
+            <Artwork item={item} />
+          </div>
         </header>
 
         <div className="detail-body">
@@ -195,7 +196,7 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
                 <div className="section-head">
                   <h3 className="section-title">选集</h3>
                   <span className="section-hint">
-                    {activeGroup?.episodes.length ?? 0} 集 · 按确认键播放
+                    {activeGroup?.episodes.length ?? 0} 集 · 选集播放
                   </span>
                 </div>
                 <div className="ep-grid">
@@ -216,7 +217,7 @@ export function Detail({ item, history, loadGroups, onClose, onPlay }: DetailPro
             </>
           ) : null}
 
-          <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(245,245,247,.34)', fontSize: 12 }}>
+          <div className="detail-tip">
             <Back10Icon width={16} height={16} />
             <span>提示：按 ESC 或遥控器返回键回到首页</span>
           </div>

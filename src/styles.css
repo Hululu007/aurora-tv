@@ -1998,3 +1998,853 @@ textarea.field {
     --card-w: 236px;
   }
 }
+
+/* =========================================================
+   手机端（<= 720px）
+   单独一层覆盖，避免影响桌面 / 电视的版式
+   ========================================================= */
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}
+
+.app {
+  --card-w: var(--card-w-base, 192px);
+}
+
+body.is-locked {
+  overflow: hidden;
+}
+
+.tabbar {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .app {
+    --card-w: clamp(112px, 42vw, 156px);
+    padding-bottom: 0;
+  }
+
+  /* ---------------- 顶栏 ---------------- */
+  .topbar {
+    height: calc(56px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 16px 0;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(4, 4, 6, 0.92) 20%, rgba(4, 4, 6, 0));
+  }
+
+  .topbar .nav {
+    display: none;
+  }
+
+  .brand {
+    padding: 4px;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .topbar-right {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .status-pill {
+    max-width: 42vw;
+    padding: 7px 11px;
+    font-size: 11px;
+    overflow: hidden;
+  }
+
+  .status-pill span {
+    min-width: 0;
+  }
+
+  .status-pill > span:last-child {
+    max-width: 100% !important;
+  }
+
+  .clock {
+    display: none;
+  }
+
+  .stage {
+    padding-top: calc(64px + env(safe-area-inset-top));
+    padding-bottom: calc(94px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------------- 底部导航 ---------------- */
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 70;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 7px 12px calc(7px + env(safe-area-inset-bottom));
+    border-radius: 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(180deg, rgba(16, 16, 20, 0.9), rgba(9, 9, 12, 0.98));
+    box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+  }
+
+  .tabbar-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 50px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(245, 245, 247, 0.46);
+    font-size: 9.5px;
+    letter-spacing: 0.02em;
+    transition: color 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tabbar-item svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .tabbar-item.is-active {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .tabbar-item.is-active svg {
+    color: var(--accent);
+  }
+
+  .tabbar-item:active {
+    transform: scale(0.96);
+  }
+
+  /* ---------------- Hero ---------------- */
+  .hero {
+    min-height: clamp(430px, 74dvh, 640px);
+    padding: calc(env(safe-area-inset-top) + 74px) 20px calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  .hero-inner {
+    position: static;
+  }
+
+  .brand-word {
+    display: inline;
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+  }
+
+  .hero-art {
+    display: block;
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 84px);
+    right: 20px;
+    width: 112px;
+    aspect-ratio: 2 / 3;
+    z-index: 1;
+    transform: rotate(2.4deg);
+    border-radius: 12px;
+    box-shadow: 0 26px 48px -14px rgba(0, 0, 0, 0.85);
+    animation: rise-in 0.6s var(--ease) both;
+  }
+
+  .hero-art .poster {
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  .hero-ambient {
+    filter: blur(20px) saturate(155%) brightness(0.78);
+    opacity: 0.92;
+  }
+
+  .hero-copy {
+    max-width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .eyebrow {
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
+  }
+
+  .hero h1 {
+    max-width: 88%;
+    margin-bottom: 12px;
+    font-size: clamp(34px, 11vw, 46px);
+    line-height: 1.02;
+  }
+
+  .hero-meta {
+    gap: 8px 10px;
+    font-size: 11.5px;
+    margin-bottom: 12px;
+  }
+
+  .badge {
+    padding: 3px 7px;
+    font-size: 9px;
+  }
+
+  .hero-desc {
+    font-size: 12.5px;
+    line-height: 1.65;
+    margin-bottom: 20px;
+    -webkit-line-clamp: 3;
+  }
+
+  .hero-actions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .hero-actions .btn {
+    height: 46px;
+    padding: 0 16px;
+    font-size: 13.5px;
+    gap: 7px;
+  }
+
+  .hero-actions .btn.primary {
+    flex: 1;
+  }
+
+  .hero-actions .btn.ghost {
+    flex: 0 0 auto;
+  }
+
+  .hero-dots {
+    top: calc(env(safe-area-inset-top) + 86px);
+    bottom: auto;
+    left: 18px;
+    right: auto;
+    gap: 0;
+  }
+
+  .hero-dot {
+    width: 22px;
+    height: 22px;
+    background: transparent;
+    position: relative;
+  }
+
+  .hero-dot::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .hero-dot.is-on {
+    width: 28px;
+    background: transparent;
+  }
+
+  .hero-dot.is-on::after {
+    inset: 8px 5px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  /* ---------------- 海报行 ---------------- */
+  .shelf {
+    margin-bottom: 26px;
+  }
+
+  .shelf-head {
+    padding: 0 20px;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+
+  .shelf-title {
+    font-size: 17px;
+  }
+
+  .shelf-sub {
+    font-size: 10px;
+  }
+
+  .shelf-track {
+    gap: 12px;
+    padding: 16px 20px 30px;
+    margin-top: -16px;
+    margin-bottom: -30px;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 20px;
+  }
+
+  .card {
+    scroll-snap-align: start;
+  }
+
+  .card.is-focused {
+    transform: scale(1.03);
+  }
+
+  .card-meta {
+    padding: 8px 2px 0;
+  }
+
+  .card-name {
+    font-size: 12px;
+  }
+
+  .card-sub {
+    font-size: 10px;
+  }
+
+  .poster {
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  /* ---------------- 详情 ---------------- */
+  .detail {
+    --detail-x: 20px;
+  }
+
+  .detail-back {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 10px);
+    left: 14px;
+    z-index: 6;
+    height: 40px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    background: rgba(10, 10, 14, 0.55);
+  }
+
+  .detail-scrim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(env(safe-area-inset-top) + 88px);
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(7, 7, 8, 0.96), rgba(7, 7, 8, 0));
+  }
+
+  .detail-hero {
+    min-height: min(560px, 72dvh);
+    padding: calc(env(safe-area-inset-top) + 84px) 20px 26px;
+  }
+
+  .detail-bg {
+    filter: blur(20px) saturate(150%) brightness(0.72);
+    opacity: 0.86;
+  }
+
+  .detail-poster {
+    display: block;
+    top: calc(env(safe-area-inset-top) + 92px);
+    right: 20px;
+    bottom: auto;
+    width: 96px;
+    transform: rotate(2deg);
+    border-radius: 10px;
+  }
+
+  .detail-copy {
+    max-width: 100%;
+  }
+
+  .detail-copy h1 {
+    max-width: 86%;
+    font-size: clamp(30px, 9.6vw, 40px);
+    margin-bottom: 10px;
+  }
+
+  .detail-copy .hero-actions {
+    width: 100%;
+    margin-top: 18px !important;
+  }
+
+  .detail-copy .hero-actions .btn {
+    height: 46px;
+  }
+
+  .detail-copy .hero-actions .btn.primary {
+    flex: 1;
+  }
+
+  .detail-body {
+    padding: 0 20px calc(env(safe-area-inset-bottom) + 36px);
+  }
+
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .section-hint {
+    font-size: 10.5px;
+  }
+
+  .synopsis {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .credits {
+    gap: 10px 18px;
+    font-size: 11.5px;
+    margin-top: 14px;
+  }
+
+  .pill {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .ep-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .ep {
+    padding: 11px 4px;
+    font-size: 11.5px;
+    text-align: center;
+  }
+
+  .detail-tip {
+    display: none;
+  }
+
+  /* ---------------- 播放器 ---------------- */
+  .player-ui {
+    padding: calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 14px);
+  }
+
+  .player-heading {
+    max-width: 72%;
+  }
+
+  .player-heading h2 {
+    font-size: 15px;
+  }
+
+  .player-heading p {
+    font-size: 10.5px;
+  }
+
+  .player-top .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .big-play {
+    width: 64px;
+    height: 64px;
+  }
+
+  .timeline {
+    height: 32px;
+  }
+
+  .timeline-track {
+    height: 5px;
+  }
+
+  .player-bottom {
+    gap: 8px;
+  }
+
+  .player-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .player-buttons {
+    gap: 0;
+    justify-content: space-between;
+  }
+
+  .pbtn {
+    height: 38px;
+    min-width: 34px;
+    padding: 0 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .player-time {
+    align-self: flex-end;
+    font-size: 10.5px;
+  }
+
+  /* ---------------- 搜索 ---------------- */
+  .search-inner {
+    padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  .search-bar {
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .search-bar input {
+    font-size: 20px;
+  }
+
+  .search-bar .btn {
+    height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .search-bar .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .search-hint {
+    font-size: 11px;
+    margin-top: 10px;
+  }
+
+  .search-section-title {
+    margin-top: 22px;
+  }
+
+  .keyboard {
+    display: none;
+  }
+
+  .result-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 8px;
+    margin-top: 22px;
+  }
+
+  .result-grid .card {
+    width: 100%;
+  }
+
+  .result-grid .card-name {
+    font-size: 11.5px;
+  }
+
+  /* ---------------- 设置 / 片源面板 ---------------- */
+  .panel-inner {
+    padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 28px);
+  }
+
+  .panel-head {
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .panel-head h1 {
+    font-size: 22px;
+  }
+
+  .panel-head p {
+    font-size: 11px;
+    line-height: 1.5;
+    max-width: 100%;
+    padding-right: 4px;
+  }
+
+  .panel-head .actions {
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .panel-head .actions .btn {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .panel-head .actions .btn.ghost {
+    display: none;
+  }
+
+  .panel-head .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .group {
+    padding: 2px 14px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .group-title {
+    font-size: 10px;
+    padding: 14px 0 2px;
+  }
+
+  .rowline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+  .rowline .label {
+    font-size: 13.5px;
+  }
+
+  .rowline .hint {
+    font-size: 11px;
+    max-width: 100%;
+  }
+
+  .rowline .control {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .seg {
+    width: 100%;
+  }
+
+  .seg button {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  .stepper {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .swatches {
+    gap: 12px;
+  }
+
+  .field {
+    font-size: 16px;
+    padding: 11px 12px;
+  }
+
+  textarea.field {
+    font-size: 13px;
+  }
+
+  .inline-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .inline-field .btn {
+    width: 100%;
+  }
+
+  .source-item {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .source-name {
+    font-size: 13px;
+  }
+
+  .source-meta {
+    font-size: 10px;
+  }
+
+  .tag {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .toast {
+    bottom: calc(env(safe-area-inset-bottom) + 84px);
+    font-size: 12px;
+    padding: 11px 16px;
+  }
+
+  .empty {
+    padding: 60px 20px;
+  }
+
+  .skel-hero {
+    margin: 0 20px 24px;
+    height: 44dvh;
+  }
+
+  .skel-row {
+    gap: 12px;
+    padding: 0 20px;
+    margin-bottom: 26px;
+  }
+}
+
+/* 更小屏幕（iPhone SE / 老安卓） */
+@media (max-width: 360px) {
+  .app {
+    --card-w: clamp(104px, 41vw, 136px);
+  }
+
+  .hero h1 {
+    font-size: clamp(30px, 10.5vw, 38px);
+  }
+
+  .hero-art {
+    width: 88px;
+  }
+
+  .detail-poster {
+    width: 82px;
+  }
+
+  .ep-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hero-actions .btn.ghost {
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-art {
+    animation: none;
+    transform: rotate(2.4deg);
+  }
+}
+
+@media (min-width: 721px) {
+  .detail-tip {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(245, 245, 247, 0.34);
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 721px) {
+  .detail-back {
+    position: fixed;
+    top: 22px;
+    left: max(var(--safe-x), calc((100vw - 1120px) / 2));
+    z-index: 4;
+  }
+
+  .detail-scrim {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .detail-scrim {
+    display: block;
+  }
+}
+
+.rotate-hint {
+  display: none;
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .rotate-hint {
+    display: block;
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 62px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: hint-fade 6s var(--ease) forwards;
+  }
+}
+
+@keyframes hint-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 矮屏手机：隐藏悬浮海报，收紧 Hero，避免按钮被底部导航压住 */
+@media (max-width: 720px) and (max-height: 640px) {
+  .hero {
+    min-height: 380px;
+    padding-top: calc(env(safe-area-inset-top) + 66px);
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 9.6vw, 36px);
+  }
+
+  .hero-desc {
+    -webkit-line-clamp: 2;
+    margin-bottom: 14px;
+  }
+
+  .hero-actions .btn {
+    height: 42px;
+  }
+
+  .detail-hero {
+    min-height: 380px;
+  }
+
+  .detail-poster {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-word {
+    display: none;
+  }
+
+  .status-pill {
+    max-width: 44vw;
+  }
+
+  .ep {
+    font-size: 10.5px;
+  }
+}

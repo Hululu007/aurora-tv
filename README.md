@@ -26,6 +26,26 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 | --- | --- | --- |
 | ![播放器](docs/screenshots/player.png) | ![手机](docs/screenshots/mobile.png) | ![焦点](docs/screenshots/focus.png) |
 
+### 手机端
+
+手机不是把桌面缩小，而是单独的一层版式：
+
+- **底部四栏导航**（首页 / 搜索 / 片库 / 设置），拇指可达，打开详情或播放器时自动收起；
+- 适配 **刘海 / 灵动岛 / 底部手势条**，顶栏、面板、播放器都带安全区；
+- Hero 改为「顶部悬浮海报 + 底部标题」，矮屏（≤ 640px 高）自动隐藏海报、收紧按钮；
+- 详情页 **4 列选集**、粘性返回按钮 + 顶部渐变遮罩，滚动时不丢失返回入口；
+- 播放器竖屏提示「横屏观看更沉浸」，横屏后控件按安全区重排；
+- 触屏不再触发电视焦点环，输入框 16px 防止 iOS 自动放大；
+- 打开面板时锁定背景滚动，关闭后恢复。
+
+| 手机首页 | 手机详情 | 手机设置 |
+| --- | --- | --- |
+| ![手机首页](docs/screenshots/mobile.png) | ![手机详情](docs/screenshots/mobile-detail.png) | ![手机设置](docs/screenshots/mobile-settings.png) |
+
+| 手机播放器 | 小屏 320px |
+| --- | --- |
+| ![手机播放器](docs/screenshots/mobile-player.png) | ![小屏](docs/screenshots/mobile-320.png) |
+
 ## 现在能做什么
 
 - 读取 `tvbox-multi.json` 的 `urls` 列表，逐个加载聚合源；
@@ -65,9 +85,9 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 | 平台 | 文件 |
 | --- | --- |
-| Windows | `AuroraTV_0.1.0_x64-setup.exe` / `.msi` |
-| Android / TV（64 位） | `AuroraTV_0.1.0_arm64-v8a.apk` |
-| Android / TV（32 位旧盒子） | `AuroraTV_0.1.0_armeabi-v7a.apk` |
+| Windows | `AuroraTV_0.1.1_x64-setup.exe` / `.msi` |
+| Android / TV（64 位） | `AuroraTV_0.1.1_arm64-v8a.apk` |
+| Android / TV（32 位旧盒子） | `AuroraTV_0.1.1_armeabi-v7a.apk` |
 
 APK 已用项目自带 keystore 做 release 签名，可直接安装；电视端已带 Leanback 入口与横屏。
 

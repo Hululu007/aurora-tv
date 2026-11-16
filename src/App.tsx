@@ -23,6 +23,7 @@ import {
 import { paletteFromString } from './core/format'
 import { useCatalog } from './hooks/useCatalog'
 import { TopBar } from './components/TopBar'
+import { MobileTabBar } from './components/MobileTabBar'
 import { Home as HomeView } from './views/Home'
 import { Detail } from './views/Detail'
 import { Player } from './views/Player'
@@ -66,6 +67,11 @@ export default function App() {
 
   useEffect(() => {
     if (!settings.layout.autoHideBar) {
+      setBarHidden(false)
+      return
+    }
+    // 手机端顶栏保持简洁常驻，避免滚动时状态与片源入口一起消失
+    if (window.matchMedia('(hover: none)').matches) {
       setBarHidden(false)
       return
     }
@@ -149,6 +155,7 @@ export default function App() {
 
   useEffect(() => {
     if (catalog.phase !== 'ready' || overlay || detail || playback) return
+    if (window.matchMedia('(hover: none)').matches) return
     const timer = window.setTimeout(() => {
       focusFirst()
     }, 650)
@@ -157,8 +164,17 @@ export default function App() {
 
   useEffect(() => {
     if (overlay || detail || playback) return
+    if (window.matchMedia('(hover: none)').matches) return
     const timer = window.setTimeout(() => focusFirst(), 120)
     return () => window.clearTimeout(timer)
+  }, [overlay, detail, playback])
+
+  /* ---------------------------------- 弹层滚动锁 --------------------------------- */
+
+  useEffect(() => {
+    const locked = Boolean(overlay || detail || playback)
+    document.body.classList.toggle('is-locked', locked)
+    return () => document.body.classList.remove('is-locked')
   }, [overlay, detail, playback])
 
   /* ---------------------------------- 观看历史 --------------------------------- */
@@ -337,7 +353,7 @@ export default function App() {
     return {
       '--accent': theme.accent,
       '--radius': `${theme.radius}px`,
-      '--card-w': `${Math.round(DENSITY_WIDTH[theme.density] * theme.scale)}px`,
+      '--card-w-base': `${Math.round(DENSITY_WIDTH[theme.density] * theme.scale)}px`,
       '--blur': `${theme.blur}px`,
       '--dim': String(theme.dim),
       '--font-scale': String(theme.font),
@@ -486,6 +502,14 @@ export default function App() {
           }}
           resolveUrl={catalog.resolvePlay}
           onProgress={handleProgress}
+        />
+      ) : null}
+
+      {!overlay && !detail && !playback ? (
+        <MobileTabBar
+          active="home"
+          onNavigate={navigate}
+          onOpenSources={() => setOverlay('sources')}
         />
       ) : null}
 

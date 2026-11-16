@@ -67,6 +67,16 @@ export function LibraryIcon(props: IconProps) {
   )
 }
 
+export function HomeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4.2 10.6 12 4l7.8 6.6" />
+      <path d="M6.2 9.4V20h11.6V9.4" />
+      <path d="M9.8 20v-5.2h4.4V20" />
+    </svg>
+  )
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

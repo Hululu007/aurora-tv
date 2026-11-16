@@ -390,6 +390,8 @@ export function Player({
           </button>
         </div>
 
+        <span className="rotate-hint">横屏观看更沉浸</span>
+
         <div className="player-center">
           <button type="button" className="big-play" onClick={togglePlay} aria-label={playing ? '暂停' : '播放'}>
             {playing ? <PauseIcon width={30} height={30} /> : <PlayIcon width={30} height={30} />}
