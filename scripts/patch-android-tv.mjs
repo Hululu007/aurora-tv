@@ -83,6 +83,30 @@ if (variant === 'tv') {
     (tag) => tag.replace(/\s*>$/, '\n            android:screenOrientation="portrait">'),
   )
 
+  // 运行时再锁一次竖屏，避免 ROM / 其他库把 Activity 改回横屏
+  const javaRoot = path.join(androidDir, 'java')
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return []
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name)
+      return entry.isDirectory() ? walk(full) : [full]
+    })
+  }
+  const activity = walk(javaRoot).find((file) => file.endsWith('MainActivity.kt'))
+  if (activity) {
+    let kotlin = fs.readFileSync(activity, 'utf8')
+    if (!kotlin.includes('SCREEN_ORIENTATION_PORTRAIT')) {
+      if (kotlin.includes('super.onCreate(savedInstanceState)')) {
+        kotlin = kotlin.replace(
+          'super.onCreate(savedInstanceState)',
+          'super.onCreate(savedInstanceState)\n        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT',
+        )
+        fs.writeFileSync(activity, kotlin)
+        console.log('[patch-android] MainActivity 运行时竖屏已写入')
+      }
+    }
+  }
+
   if (!manifest.includes('usesCleartextTraffic')) {
     manifest = manifest.replace(/<application\b[^>]*>/s, (tag) =>
       tag.replace(/\s*>$/, '\n        android:usesCleartextTraffic="true"\n        >'),
@@ -91,6 +115,22 @@ if (variant === 'tv') {
 }
 
 fs.writeFileSync(manifestPath, manifest)
+
+// 把 targetSdk 降到 34：Android 16 对 targetSdk >= 36 的大屏设备会忽略竖屏锁定
+const gradlePath = path.join(root, 'src-tauri', 'gen', 'android', 'app', 'build.gradle.kts')
+if (fs.existsSync(gradlePath)) {
+  const before = fs.readFileSync(gradlePath, 'utf8')
+  let after = before.replace(/(\btargetSdk\s*=\s*)\d+/, (_match, prefix) => `${prefix}34`)
+  if (after === before) {
+    after = before.replace(/(\btargetSdkVersion\s*=\s*)\d+/, (_match, prefix) => `${prefix}34`)
+  }
+  if (after !== before) {
+    fs.writeFileSync(gradlePath, after)
+    console.log('[patch-android] targetSdk: 34')
+  } else {
+    console.log('[patch-android] targetSdk 未在 build.gradle.kts 中找到，保持默认')
+  }
+}
 console.log(
   `[patch-android] variant=${variant}：${variant === 'tv' ? 'leanback / landscape / banner' : 'portrait / no leanback'} / cleartext`,
 )

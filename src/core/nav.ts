@@ -30,7 +30,17 @@ export function getNavLock() {
  */
 export function isPhoneUi(): boolean {
   if (typeof window === 'undefined') return false
-  return window.matchMedia('(max-width: 720px)').matches
+
+  const ua = navigator.userAgent
+  const handheld =
+    /Android|iPhone|iPad|iPod|Mobile/i.test(ua) && !/TV|SmartTV|BRAVIA|AFT/i.test(ua)
+  const touch = navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches
+  const portrait = window.matchMedia('(orientation: portrait)').matches
+
+  // 部分 Android WebView 会把布局宽度报成 980，不能只靠宽度判断
+  if (handheld && touch && portrait) return true
+  if (window.innerWidth <= 720) return true
+  return handheld && touch && window.innerWidth <= 1024
 }
 
 function scope(): ParentNode {
