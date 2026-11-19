@@ -3612,3 +3612,127 @@ body.is-locked {
   gap: 6px;
   flex: 0 0 auto;
 }
+
+/* =========================================================
+   支持开发 / 赞赏码
+   ========================================================= */
+
+.support-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(18px);
+}
+
+.support-card {
+  width: min(480px, 94vw);
+  max-height: 92vh;
+  overflow: auto;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #101014;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+}
+
+.support-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.support-head h2 {
+  margin: 6px 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.support-head p {
+  margin: 0;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.support-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 14px;
+}
+
+.support-tab {
+  flex: 1;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.62);
+  font-size: 12.5px;
+}
+
+.support-tab.is-active {
+  background: #f5f5f7;
+  border-color: transparent;
+  color: #08090c;
+}
+
+.support-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.support-qr img {
+  width: min(280px, 68vw);
+  height: auto;
+  display: block;
+  border-radius: 18px;
+  background: #fff;
+  padding: 10px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.support-qr p {
+  margin: 0;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.support-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 11.5px;
+}
+
+@media (max-width: 720px), (hover: none) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
+  .support-layer {
+    padding: 16px;
+  }
+
+  .support-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .support-head h2 {
+    font-size: 21px;
+  }
+
+  .support-qr img {
+    width: min(230px, 62vw);
+  }
+}

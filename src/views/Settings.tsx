@@ -11,6 +11,7 @@ import {
 } from '../core/settings'
 import { focusFirst, isPhoneUi, setNavRoot } from '../core/nav'
 import { ChevronLeft, RefreshIcon } from '../components/Icons'
+import { Support } from '../components/Support'
 
 interface SettingsViewProps {
   settings: Settings
@@ -49,6 +50,7 @@ export function SettingsView({
   const [proxy, setProxy] = useState(settings.data.proxy)
   const [syncBox, setSyncBox] = useState('')
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [supportOpen, setSupportOpen] = useState(false)
 
   useEffect(() => {
     setNavRoot(rootRef.current)
@@ -524,8 +526,18 @@ export function SettingsView({
 
           <div className="group">
             <div className="group-title">关于</div>
-            <Row label="Aurora TV" hint="0.1.15 · Tauri 2 + React · 手机 / Windows / Android TV">
+            <Row label="Aurora TV" hint="0.1.16 · Tauri 2 + React · 手机 / Windows / Android TV">
               <span className="tag">开源原型</span>
+            </Row>
+            <Row label="支持开发" hint="微信 / 支付宝赞赏码 · 完全自愿，不影响任何功能">
+              <button
+                type="button"
+                className="btn primary"
+                data-nav
+                onClick={() => setSupportOpen(true)}
+              >
+                支持一下
+              </button>
             </Row>
             <Row
               label="屏幕"
@@ -551,6 +563,7 @@ export function SettingsView({
             仅用于播放你拥有合法访问权限的内容
           </div>
         </div>
+        {supportOpen ? <Support onClose={() => setSupportOpen(false)} /> : null}
       </div>
     </div>
   )

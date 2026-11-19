@@ -136,12 +136,12 @@ npm run share
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.15_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.15_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.15_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.15_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.15_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.15_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.16_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.16_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.16_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.16_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.16_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.16_x64_en-US.msi` |
 | **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
 | **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 
@@ -339,6 +339,16 @@ aurora-tv/
 - [ ] 同步二维码配对（免手输地址/Token）
 - [ ] 真正的电视遥控按键映射（`KeyEvent.KEYCODE_DPAD_*`）与开机横屏
 - [ ] 豆瓣/ TMDB 元数据补全
+
+## 支持开发
+
+Aurora TV 是免费开源的。如果它帮到了你，可以扫码请作者喝杯咖啡；**完全自愿，不影响任何功能**。
+
+| 微信赞赏 | 支付宝 |
+| --- | --- |
+| ![微信赞赏码](public/donate/wechat.png) | ![支付宝收款码](public/donate/alipay.png) |
+
+也可以用 App 内 **设置 → 关于 → 支持开发** 打开同样的二维码。
 
 ## 免责声明
 
