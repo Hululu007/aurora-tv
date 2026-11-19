@@ -43,7 +43,7 @@
       "icons/icon.png"
     ],
     "android": {
-      "minSdkVersion": 21
+      "minSdkVersion": 23
     }
   }
 }

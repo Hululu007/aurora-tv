@@ -4,9 +4,9 @@
 
 ## 安装兼容性
 
-- `minSdkVersion` 从 24 降到 **21**：支持 Android 5.0 / 5.1 / 6.0 的老电视和盒子；
+- `minSdkVersion` 从 24 降到 **23**：支持 Android 6.0 / 7.0 的老电视和盒子；
 - APK 同时启用 **v1（JAR）签名 + v2 签名**：
-  - Android 5–6 只认 v1，之前只有 v2 会提示「应用未安装 / 解析包错误」；
+  - Android 6.0 只认 v1，之前只有 v2 会提示「应用未安装 / 解析包错误」；
   - Android 7+ 继续用 v2。
 - 电视端仍分 `arm64-v8a` 和 `armeabi-v7a`：
   - 老盒子绝大多数是 32 位，请装 `AuroraTV_0.1.11_tv-armeabi-v7a.apk`；
@@ -14,7 +14,7 @@
 
 ## 老电视注意
 
-- 最低 Android 5.0（API 21）；**Android 4.4 及以下不支持**，Tauri 2 / 系统 WebView 都不满足；
+- 最低 Android 6.0（API 23）；**Android 5.1 及以下不支持**，Tauri 依赖的 AndroidX 组件最低要求 API 23；
 - 极老的电视 WebView 可能太旧导致白屏；可以在电视上安装/更新「Android System WebView」或 Chrome 后再试；
 - 电视端仍带 Leanback 入口、横屏、banner，遥控器可操作播放器全部控制项。
 

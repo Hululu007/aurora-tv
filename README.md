@@ -146,8 +146,8 @@ npm run share
 - 电视端：强制横屏、注册 Leanback 入口、带 320×180 banner，会出现在电视的「应用」行。
 
 两者包名相同（`com.auroratv.app`）、签名相同，同一台设备只需装其中一个；从手机版换电视版会直接覆盖安装。
-APK 均已用项目自带 keystore 做 release 签名；从 **0.1.11** 起同时带 v1（JAR）和 v2 签名，最低支持 **Android 5.0（API 21）**，老电视请优先试 `tv-armeabi-v7a`。
-Android 4.4 及以下太老（系统和 WebView 都不满足），不在支持范围。
+APK 均已用项目自带 keystore 做 release 签名；从 **0.1.11** 起同时带 v1（JAR）和 v2 签名，最低支持 **Android 6.0（API 23）**，老电视请优先试 `tv-armeabi-v7a`。
+Android 5.1 及以下太老（Tauri 依赖的 AndroidX 组件最低要求 API 23），不在支持范围。
 
 ### 0. 环境
 
