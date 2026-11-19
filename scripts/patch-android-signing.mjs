@@ -60,6 +60,9 @@ if (!gradle.includes('signingConfigs {')) {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
             }
+            // 老电视 / Android 5-6 只认 v1（JAR）签名
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 

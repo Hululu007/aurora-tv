@@ -131,12 +131,12 @@ npm run share
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.10_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.10_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.10_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.10_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.10_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.10_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.11_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.11_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.11_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.11_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.11_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.11_x64_en-US.msi` |
 | **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
 | **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 
@@ -146,7 +146,8 @@ npm run share
 - 电视端：强制横屏、注册 Leanback 入口、带 320×180 banner，会出现在电视的「应用」行。
 
 两者包名相同（`com.auroratv.app`）、签名相同，同一台设备只需装其中一个；从手机版换电视版会直接覆盖安装。
-APK 均已用项目自带 keystore 做 release 签名。
+APK 均已用项目自带 keystore 做 release 签名；从 **0.1.11** 起同时带 v1（JAR）和 v2 签名，最低支持 **Android 5.0（API 21）**，老电视请优先试 `tv-armeabi-v7a`。
+Android 4.4 及以下太老（系统和 WebView 都不满足），不在支持范围。
 
 ### 0. 环境
 
