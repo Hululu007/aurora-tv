@@ -126,7 +126,7 @@ export interface Row {
   items: CatalogItem[]
 }
 
-export type View = 'home' | 'category' | 'search' | 'settings'
+export type View = 'home' | 'category' | 'search' | 'history' | 'settings'
 
 export interface Site {
   key: string
@@ -160,6 +160,8 @@ export interface HistoryEntry {
   position: number
   duration: number
   updatedAt: number
+  /** 删除时间：用于三端同步删除（墓碑），有值的记录不展示 */
+  deletedAt?: number
   /** 重新拉起播放所需的线路信息（演示数据可直接复用 groups） */
   groups?: PlayGroup[]
 }

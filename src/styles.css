@@ -3401,3 +3401,214 @@ body.is-locked {
 .player-gesture.brightness {
   background: rgba(23, 23, 30, 0.86);
 }
+
+/* =========================================================
+   播放历史（完整列表）
+   ========================================================= */
+
+.history-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 10px var(--safe-x) 70px;
+}
+
+.history-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0 22px;
+}
+
+.history-head h1 {
+  margin: 6px 0 4px;
+  font-size: 38px;
+  font-weight: 660;
+  letter-spacing: -0.03em;
+}
+
+.history-head p {
+  margin: 0;
+  color: var(--faint);
+  font-size: 13px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.045);
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.history-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.history-poster {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 92px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.84);
+  overflow: hidden;
+}
+
+.history-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.history-info strong {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-info small {
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.52);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-progress {
+  display: block;
+  width: min(320px, 100%);
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.history-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: #fff;
+}
+
+.history-info em {
+  font-style: normal;
+  font-size: 10.5px;
+  color: rgba(245, 245, 247, 0.34);
+}
+
+.history-delete {
+  flex: 0 0 auto;
+  align-self: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(245, 245, 247, 0.56);
+  font-size: 12px;
+}
+
+.history-delete:hover {
+  background: rgba(255, 90, 90, 0.16);
+  border-color: rgba(255, 90, 90, 0.35);
+  color: #ff9b9b;
+}
+
+@media (max-width: 720px), (hover: none) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
+  .history-page {
+    padding: 6px 18px 96px;
+  }
+
+  .history-head {
+    align-items: flex-end;
+    padding-bottom: 16px;
+  }
+
+  .history-head h1 {
+    font-size: 28px;
+  }
+
+  .history-head p {
+    font-size: 11px;
+  }
+
+  .history-head .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 11.5px;
+  }
+
+  .history-item {
+    padding: 8px;
+    border-radius: 15px;
+    gap: 6px;
+  }
+
+  .history-poster {
+    width: 54px;
+    height: 78px;
+    border-radius: 10px;
+    font-size: 19px;
+  }
+
+  .history-main {
+    gap: 11px;
+  }
+
+  .history-info strong {
+    font-size: 13.5px;
+  }
+
+  .history-info small {
+    font-size: 10.5px;
+  }
+
+  .history-info em {
+    font-size: 9.5px;
+  }
+
+  .history-delete {
+    height: 30px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+}
+
+.history-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}

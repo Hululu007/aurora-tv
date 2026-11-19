@@ -64,6 +64,7 @@ export function mergeHistory(local: HistoryEntry[], remote: HistoryEntry[]): His
     map.set(entry.mediaKey, {
       ...prev,
       ...winner,
+      deletedAt: winner.deletedAt,
       groups: winner.groups?.length ? winner.groups : prev.groups,
       poster: winner.poster ?? prev.poster,
       palette: winner.palette ?? prev.palette,

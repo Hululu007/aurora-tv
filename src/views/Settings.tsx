@@ -524,7 +524,7 @@ export function SettingsView({
 
           <div className="group">
             <div className="group-title">关于</div>
-            <Row label="Aurora TV" hint="0.1.14 · Tauri 2 + React · 手机 / Windows / Android TV">
+            <Row label="Aurora TV" hint="0.1.15 · Tauri 2 + React · 手机 / Windows / Android TV">
               <span className="tag">开源原型</span>
             </Row>
             <Row

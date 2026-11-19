@@ -14,6 +14,7 @@ const TABS: Array<{ id: View; label: string }> = [
   { id: 'home', label: '首页' },
   { id: 'category', label: '分类' },
   { id: 'search', label: '搜索' },
+  { id: 'history', label: '历史' },
   { id: 'settings', label: '设置' },
 ]
 

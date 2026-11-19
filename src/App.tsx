@@ -34,6 +34,7 @@ import { Player } from './views/Player'
 import { SettingsView } from './views/Settings'
 import { Sources } from './views/Sources'
 import { Search } from './views/Search'
+import { HistoryView } from './views/History'
 import { CategoryView } from './views/CategoryView'
 import { bindEdgeSwipe } from './core/gestures'
 
@@ -50,7 +51,7 @@ const CACHE_PREFIX = 'aurora.cache.'
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
-  const [page, setPage] = useState<'home' | 'category'>('home')
+  const [page, setPage] = useState<'home' | 'category' | 'history'>('home')
   const [overlay, setOverlay] = useState<Overlay>(null)
   const [detail, setDetail] = useState<CatalogItem | null>(null)
   const [playback, setPlayback] = useState<PlaybackState | null>(null)
@@ -226,7 +227,7 @@ export default function App() {
       setDetail(null)
       return
     }
-    if (page === 'category') {
+    if (page === 'category' || page === 'history') {
       setPage('home')
       window.scrollTo({ top: 0 })
       return
@@ -282,7 +283,7 @@ export default function App() {
   useEffect(() => {
     const win = window as Window & { onAndroidBackPressed?: () => boolean }
     win.onAndroidBackPressed = () => {
-      const hasLayer = !!(playback || detail || overlay || page === 'category')
+      const hasLayer = !!(playback || detail || overlay || page !== 'home')
       if (!hasLayer) return true
       closeTop()
       return false
@@ -332,8 +333,10 @@ export default function App() {
 
   /* ---------------------------------- 观看历史 --------------------------------- */
 
+  const activeHistory = useMemo(() => history.filter((entry) => !entry.deletedAt), [history])
+
   const continueRow = useMemo(() => {
-    const items: CatalogItem[] = history
+    const items: CatalogItem[] = activeHistory
       .filter((entry) => entry.position > 5 && entry.groups?.length)
       .slice(0, 10)
       .map((entry) => ({
@@ -355,7 +358,7 @@ export default function App() {
     return items.length
       ? { key: '__continue', title: '播放历史', subtitle: '从上次停下的地方继续', items }
       : null
-  }, [history])
+  }, [activeHistory])
 
   const highScoreRow = useMemo(() => {
     const seen = new Set<string>()
@@ -394,11 +397,11 @@ export default function App() {
     (item: CatalogItem) => {
       if (item.resume) return undefined
       const key = `${item.siteKey ?? 'demo'}|${item.id}`
-      const entry = history.find((h) => h.mediaKey === key)
+      const entry = activeHistory.find((h) => h.mediaKey === key)
       if (!entry || !entry.duration) return undefined
       return entry.position / entry.duration
     },
-    [history],
+    [activeHistory],
   )
 
   /* ----------------------------------- 播放 ---------------------------------- */
@@ -495,6 +498,67 @@ export default function App() {
     [playback, scheduleSync],
   )
 
+  const writeHistory = useCallback(
+    (next: HistoryEntry[]) => {
+      const sorted = [...next]
+        .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+        .slice(0, 60)
+      historyRef.current = sorted
+      saveHistory(sorted)
+      setHistory(sorted)
+      scheduleSync()
+    },
+    [scheduleSync],
+  )
+
+  const resumeHistory = useCallback(
+    (entry: HistoryEntry) => {
+      if (!entry.groups?.length) {
+        showToast('这条记录没有可用线路，无法继续播放')
+        return
+      }
+      setOverlay(null)
+      setDetail(null)
+      setPlayback({
+        title: entry.title,
+        subtitle: entry.subtitle,
+        groups: entry.groups,
+        groupIndex: entry.groupIndex,
+        episodeIndex: entry.episodeIndex,
+        poster: entry.poster,
+        palette: entry.palette,
+        mediaKey: entry.mediaKey,
+        startTime: entry.position,
+      })
+    },
+    [showToast],
+  )
+
+  const deleteHistory = useCallback(
+    (entry: HistoryEntry) => {
+      const now = Date.now()
+      const exists = historyRef.current.some((item) => item.mediaKey === entry.mediaKey)
+      const base = exists
+        ? historyRef.current.map((item) =>
+            item.mediaKey === entry.mediaKey ? { ...item, deletedAt: now, updatedAt: now } : item,
+          )
+        : [{ ...entry, deletedAt: now, updatedAt: now }, ...historyRef.current]
+      writeHistory(base)
+      showToast('已删除，正在同步到其他端')
+    },
+    [showToast, writeHistory],
+  )
+
+  const clearHistory = useCallback(() => {
+    const now = Date.now()
+    writeHistory(
+      historyRef.current.map((entry) =>
+        entry.deletedAt ? entry : { ...entry, deletedAt: now, updatedAt: now },
+      ),
+    )
+    showToast('播放历史已清空，正在同步到其他端')
+  }, [showToast, writeHistory])
+
   /* ---------------------------------- 数据同步 --------------------------------- */
 
   const applyData = useCallback(
@@ -563,6 +627,13 @@ export default function App() {
       window.scrollTo({ top: 0 })
       return
     }
+    if (view === 'history') {
+      setPage('history')
+      setOverlay(null)
+      setDetail(null)
+      window.scrollTo({ top: 0 })
+      return
+    }
     setDetail(null)
     setOverlay(view)
   }
@@ -603,6 +674,13 @@ export default function App() {
             onOpen={handleOpen}
             onOpenSources={() => setOverlay('sources')}
           />
+        ) : page === 'history' ? (
+          <HistoryView
+            history={history}
+            onResume={resumeHistory}
+            onDelete={deleteHistory}
+            onClear={clearHistory}
+          />
         ) : (
           <HomeView
             hero={highScoreRow ? highScoreRow.items.slice(0, 3) : catalog.hero}
@@ -626,7 +704,7 @@ export default function App() {
       {detail ? (
         <Detail
           item={detail}
-          history={history.find((h) => h.mediaKey === `${detail.siteKey ?? 'demo'}|${detail.id}`)}
+          history={activeHistory.find((h) => h.mediaKey === `${detail.siteKey ?? 'demo'}|${detail.id}`)}
           loadGroups={catalog.loadGroups}
           onClose={() => setDetail(null)}
           onPlay={(groups, groupIndex, episodeIndex, startTime) =>
