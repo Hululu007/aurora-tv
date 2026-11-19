@@ -58,7 +58,7 @@ Aurora TV 把它做成了一个「看起来像 Apple TV」的播放器：
 
 - 读取 `tvbox-multi.json` 的 `urls` 列表，逐个加载聚合源；
 - **自动探测**可用源与站点（跳过全 spider 的源），优先上次成功的站点，首次启动约 10–20 秒；
-- 首页按站点分类生成多行海报，自动挑选 Hero 精选；
+- 首页只保留 **播放历史** 和 **近期高分** 两行：播放历史来自本机继续观看记录，近期高分筛选评分 ≥ 7.5 的影片按更新时间排序，不再堆叠一堆分类行；
 - **分类页**：电影 / 电视剧 / 动漫 / 短剧 / 动漫短剧 / 综艺，海报网格 + 加载更多，手机 3 列、桌面自适应；
 - 分类支持 **默认 / 时间 / 评分 / 人气 / 热度** 排序，按当前已加载内容重新排列；
 - 站点搜索、搜索结果海报墙、屏幕键盘（电视遥控可输入字母/数字）；
@@ -131,12 +131,12 @@ npm run share
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.13_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.13_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.13_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.13_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.13_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.13_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.14_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.14_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.14_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.14_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.14_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.14_x64_en-US.msi` |
 | **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
 | **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 

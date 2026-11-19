@@ -353,14 +353,42 @@ export default function App() {
         mediaKey: entry.mediaKey,
       }))
     return items.length
-      ? { key: '__continue', title: '继续观看', subtitle: '从上次停下的地方继续', items }
+      ? { key: '__continue', title: '播放历史', subtitle: '从上次停下的地方继续', items }
       : null
   }, [history])
 
-  const rows = useMemo(
-    () => (continueRow ? [continueRow, ...catalog.rows] : catalog.rows),
-    [catalog.rows, continueRow],
-  )
+  const highScoreRow = useMemo(() => {
+    const seen = new Set<string>()
+    const items = catalog.rows
+      .flatMap((row) => row.items)
+      .filter((item) => (Number.parseFloat(item.score ?? '0') || 0) >= 7.5)
+      .filter((item) => {
+        const key = `${item.siteKey ?? 'demo'}|${item.id}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .sort((a, b) => {
+        const timeA = a.updatedAt ? Date.parse(a.updatedAt) : 0
+        const timeB = b.updatedAt ? Date.parse(b.updatedAt) : 0
+        if (Number.isFinite(timeA) && Number.isFinite(timeB) && timeB !== timeA) {
+          return timeB - timeA
+        }
+        return (Number.parseFloat(b.score ?? '0') || 0) - (Number.parseFloat(a.score ?? '0') || 0)
+      })
+      .slice(0, 24)
+
+    return items.length
+      ? { key: '__high', title: '近期高分', subtitle: '评分 7.5+ · 按更新时间', items }
+      : null
+  }, [catalog.rows])
+
+  const rows = useMemo(() => {
+    const list = []
+    if (continueRow) list.push(continueRow)
+    if (highScoreRow) list.push(highScoreRow)
+    return list
+  }, [continueRow, highScoreRow])
 
   const progressOf = useCallback(
     (item: CatalogItem) => {
@@ -577,12 +605,12 @@ export default function App() {
           />
         ) : (
           <HomeView
-            hero={catalog.hero}
+            hero={highScoreRow ? highScoreRow.items.slice(0, 3) : catalog.hero}
             rows={rows}
             loading={catalog.phase === 'loading' && !catalog.rows.length}
             error={catalog.error}
             demo={catalog.demo}
-            showHero={settings.layout.hero}
+            showHero={settings.layout.hero && !!highScoreRow}
             rotate={settings.layout.rotate}
             onOpen={handleOpen}
             onPlay={handlePlay}
