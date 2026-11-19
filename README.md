@@ -131,12 +131,12 @@ npm run share
 
 | 端 | 适用设备 | 文件 |
 | --- | --- | --- |
-| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.9_phone-arm64-v8a.apk` |
-| **手机端** | 32 位老手机 | `AuroraTV_0.1.9_phone-armeabi-v7a.apk` |
-| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.9_tv-arm64-v8a.apk` |
-| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.9_tv-armeabi-v7a.apk` |
-| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.9_x64-setup.exe` |
-| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.9_x64_en-US.msi` |
+| **手机端** | 64 位安卓手机 | `AuroraTV_0.1.10_phone-arm64-v8a.apk` |
+| **手机端** | 32 位老手机 | `AuroraTV_0.1.10_phone-armeabi-v7a.apk` |
+| **电视端** | 64 位电视 / 盒子 | `AuroraTV_0.1.10_tv-arm64-v8a.apk` |
+| **电视端** | 32 位老电视盒子 | `AuroraTV_0.1.10_tv-armeabi-v7a.apk` |
+| **Windows 端** | Win10 / Win11 安装版 | `AuroraTV_0.1.10_x64-setup.exe` |
+| **Windows 端** | MSI 部署包 | `AuroraTV_0.1.10_x64_en-US.msi` |
 | **鸿蒙 4.x** | 兼容 Android 的华为手机 | 安装上面的**手机端 APK** |
 | **鸿蒙 NEXT 5.x** | 纯血鸿蒙 | 暂用网页 / PWA，见 [docs/HARMONY.md](docs/HARMONY.md) |
 

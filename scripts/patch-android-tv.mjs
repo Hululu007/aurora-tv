@@ -72,10 +72,16 @@ if (variant === 'tv') {
     fs.copyFileSync(bannerSource, path.join(bannerDir, 'banner.png'))
   }
 } else {
-  // 手机：去掉模板里给 TV 准备的 Leanback 入口和横屏锁
+  // 手机：去掉模板里给 TV 准备的 Leanback 入口和横屏锁，并强制竖屏启动
   manifest = manifest.replace(/\s*<category android:name="android\.intent\.category\.LEANBACK_LAUNCHER" \/>/g, '')
   manifest = manifest.replace(/\s*android:screenOrientation="[^"]*"/g, '')
   manifest = manifest.replace(/\s*android:banner="@[^"]*"/g, '')
+
+  // 部分 ROM / 车机模式会把未指定的 Activity 直接按横屏启动，手机端显式锁竖屏
+  manifest = manifest.replace(
+    /<activity\b[^>]*android:name="\.MainActivity"[^>]*>/s,
+    (tag) => tag.replace(/\s*>$/, '\n            android:screenOrientation="portrait">'),
+  )
 
   if (!manifest.includes('usesCleartextTraffic')) {
     manifest = manifest.replace(/<application\b[^>]*>/s, (tag) =>
