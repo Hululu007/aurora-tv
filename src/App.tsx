@@ -211,6 +211,12 @@ export default function App() {
   /* --------------------------------- 全局按键 --------------------------------- */
 
   const closeTop = useCallback(() => {
+    // 播放器会把焦点锁在内部，返回键仍应先关闭播放器
+    if (playback) {
+      setNavLock(false)
+      setPlayback(null)
+      return
+    }
     if (getNavLock()) return
     if (overlay) {
       setOverlay(null)
@@ -218,10 +224,6 @@ export default function App() {
     }
     if (detail) {
       setDetail(null)
-      return
-    }
-    if (playback) {
-      setPlayback(null)
       return
     }
     if (page === 'category') {
@@ -276,6 +278,19 @@ export default function App() {
       stopGamepad()
     }
   }, [closeTop])
+
+  useEffect(() => {
+    const win = window as Window & { onAndroidBackPressed?: () => boolean }
+    win.onAndroidBackPressed = () => {
+      const hasLayer = !!(playback || detail || overlay || page === 'category')
+      if (!hasLayer) return true
+      closeTop()
+      return false
+    }
+    return () => {
+      delete win.onAndroidBackPressed
+    }
+  }, [closeTop, detail, overlay, page, playback])
 
   useEffect(() => {
     const onBackGesture = () => {

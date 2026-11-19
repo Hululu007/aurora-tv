@@ -116,6 +116,54 @@ if (variant === 'tv') {
 
 fs.writeFileSync(manifestPath, manifest)
 
+// 拦截 Android 返回键：先交给网页处理层级返回，网页不处理时才退出 App
+const javaRoot = path.join(androidDir, 'java')
+const walk = (dir) => {
+  if (!fs.existsSync(dir)) return []
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name)
+    return entry.isDirectory() ? walk(full) : [full]
+  })
+}
+const activityFile = walk(javaRoot).find((file) => file.endsWith('MainActivity.kt'))
+if (activityFile) {
+  let kotlin = fs.readFileSync(activityFile, 'utf8')
+  if (!kotlin.includes('onAndroidBackPressed')) {
+    if (!kotlin.includes('import android.webkit.WebView')) {
+      kotlin = kotlin.replace(/^(package .+)$/m, '$1\n\nimport android.webkit.WebView')
+    }
+
+    const backHandler = `
+  private var auroraWebView: WebView? = null
+
+  override fun onWebViewCreate(webView: WebView) {
+    auroraWebView = webView
+    super.onWebViewCreate(webView)
+  }
+
+  @Deprecated("Deprecated in Java")
+  override fun onBackPressed() {
+    val webView = auroraWebView
+    if (webView == null) {
+      finish()
+      return
+    }
+    webView.evaluateJavascript(
+      "window.onAndroidBackPressed ? window.onAndroidBackPressed() : true"
+    ) { result ->
+      if (result == "true") finish()
+    }
+  }
+`
+    const closeIndex = kotlin.lastIndexOf('}')
+    if (closeIndex > 0) {
+      kotlin = kotlin.slice(0, closeIndex) + backHandler + kotlin.slice(closeIndex)
+      fs.writeFileSync(activityFile, kotlin)
+      console.log('[patch-android] Android 返回键拦截已写入')
+    }
+  }
+}
+
 // 把 targetSdk 降到 34：Android 16 对 targetSdk >= 36 的大屏设备会忽略竖屏锁定
 const gradlePath = path.join(root, 'src-tauri', 'gen', 'android', 'app', 'build.gradle.kts')
 if (fs.existsSync(gradlePath)) {
